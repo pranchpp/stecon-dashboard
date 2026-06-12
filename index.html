@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,18 +7,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,600&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:            #0d1614;
-      --surface:       #14211d;
-      --surface-2:     #101b17;
-      --border:        #233830;
-      --accent:        #2dd4bf;
-      --accent-dark:   #5eead4;
-      --accent-light:  rgba(45,212,191,0.12);
-      --accent-border: rgba(45,212,191,0.4);
-      --done:          #7ee8b2;
-      --done-bg:       rgba(126,232,178,0.1);
-      --done-br:       rgba(126,232,178,0.3);
-      --done-text:     #a7f0cb;
+      --bg:            #0d1020;
+      --surface:       #111827;
+      --surface-2:     #0f172a;
+      --border:        #1e3357;
+      --accent:        #3b82f6;
+      --accent-dark:   #93c5fd;
+      --accent-light:  rgba(59,130,246,0.12);
+      --accent-border: rgba(59,130,246,0.4);
+      --done:          #60a5fa;
+      --done-bg:       rgba(96,165,250,0.1);
+      --done-br:       rgba(96,165,250,0.3);
+      --done-text:     #bfdbfe;
       --pending:       #f6c177;
       --pending-bg:    rgba(246,193,119,0.1);
       --pending-br:    rgba(246,193,119,0.3);
@@ -28,9 +28,9 @@
       --blocked-br:    rgba(235,111,146,0.34);
       --blocked-text:  #f3a0b8;
       --urgent:        #eb6f92;
-      --text:          #e7f0ec;
-      --muted:         #9fb5ac;
-      --dim:           #64807a;
+      --text:          #e8eeff;
+      --muted:         #94a3b8;
+      --dim:           #64748b;
       --shadow-sm:     0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.25);
       --shadow-md:     0 6px 18px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.25);
       --shadow-lg:     0 14px 36px rgba(0,0,0,0.45), 0 5px 12px rgba(0,0,0,0.3);
@@ -43,10 +43,10 @@
     body {
       font-family: 'Jost', system-ui, sans-serif;
       background:
-        radial-gradient(1100px 520px at 88% -120px, rgba(45,212,191,0.13), transparent 62%),
+        radial-gradient(1100px 520px at 88% -120px, rgba(59,130,246,0.13), transparent 62%),
         radial-gradient(900px 460px at -8% 28%, rgba(246,193,119,0.08), transparent 60%),
-        radial-gradient(800px 420px at 50% 110%, rgba(126,232,178,0.07), transparent 60%),
-        linear-gradient(180deg, #0d1614 0%, #101b18 100%);
+        radial-gradient(800px 420px at 50% 110%, rgba(96,165,250,0.07), transparent 60%),
+        linear-gradient(180deg, #0d1020 0%, #0f1428 100%);
       background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
@@ -57,8 +57,8 @@
     body::before {
       content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
       background-image:
-        linear-gradient(rgba(45,212,191,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(45,212,191,0.05) 1px, transparent 1px);
+        linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
       background-size: 44px 44px;
       mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.25) 600px, rgba(0,0,0,0.15));
       -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.25) 600px, rgba(0,0,0,0.15));
@@ -66,12 +66,12 @@
 
     .topbar, #app { position: relative; z-index: 1; }
 
-    ::selection { background: #0f766e; color: #fff; }
+    ::selection { background: #1d4ed8; color: #fff; }
 
     /* ─── STICKY HEADER ───────────────────────────── */
     .topbar {
       position: sticky; top: 0; z-index: 50;
-      background: rgba(13,22,20,0.85);
+      background: rgba(13,16,32,0.85);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
@@ -81,7 +81,7 @@
       background: repeating-linear-gradient(
         -45deg,
         #f6c177 0 14px,
-        #1c2b27 14px 28px
+        #1a2340 14px 28px
       );
       opacity: 0.85;
     }
@@ -94,14 +94,14 @@
     .brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
     .brand-mark {
       width: 42px; height: 42px; border-radius: 11px;
-      background: linear-gradient(135deg, #0f766e 0%, #14b8a6 70%, #2dd4bf 100%);
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 70%, #3b82f6 100%);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 3px 12px rgba(20,184,166,0.45);
+      box-shadow: 0 3px 12px rgba(37,99,235,0.45);
       position: relative; overflow: hidden;
     }
     .brand-mark::after {
       content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
-      background: repeating-linear-gradient(-45deg, #f6c177 0 5px, #1c2b27 5px 10px);
+      background: repeating-linear-gradient(-45deg, #f6c177 0 5px, #1a2340 5px 10px);
     }
     .brand-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.2; }
     .brand-sub  { font-size: 9.5px; font-weight: 700; color: var(--pending); letter-spacing: 0.12em; text-transform: uppercase; }
@@ -118,7 +118,7 @@
       font-family: inherit; font-size: 13px;
       outline: none; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     }
-    .search-input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px rgba(45,212,191,0.18); }
+    .search-input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px rgba(59,130,246,0.18); }
     .search-input::placeholder { color: var(--dim); }
 
     .nav-date { text-align: right; flex-shrink: 0; }
@@ -134,12 +134,12 @@
       margin-bottom: 28px;
       position: relative; overflow: hidden;
       background:
-        radial-gradient(700px 300px at 90% -60px, rgba(94,234,212,0.22), transparent 65%),
+        radial-gradient(700px 300px at 90% -60px, rgba(96,165,250,0.22), transparent 65%),
         radial-gradient(500px 260px at 10% 120%, rgba(246,193,119,0.18), transparent 60%),
-        linear-gradient(120deg, #0f3d38 0%, #11635a 55%, #14837a 100%);
+        linear-gradient(120deg, #0f2057 0%, #1a3880 55%, #1e4fad 100%);
       border-radius: 20px;
       padding: 30px 32px 34px;
-      box-shadow: 0 16px 40px rgba(15,99,90,0.4);
+      box-shadow: 0 16px 40px rgba(21,56,129,0.4);
       opacity: 0; animation: fadeUp 0.5s ease 0.05s forwards;
     }
     /* dotted texture */
@@ -151,7 +151,7 @@
     /* hazard stripe along bottom */
     .hero::after {
       content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 7px;
-      background: repeating-linear-gradient(-45deg, #f6c177 0 16px, #1c2b27 16px 32px);
+      background: repeating-linear-gradient(-45deg, #f6c177 0 16px, #1a2340 16px 32px);
     }
     .hero > * { position: relative; z-index: 1; }
 
@@ -174,7 +174,7 @@
       font-size: clamp(1.9rem, 4.2vw, 2.6rem); font-weight: 700; line-height: 1.12; margin-bottom: 8px;
       color: #fff; letter-spacing: 0.01em;
     }
-    .page-sub { font-size: 14px; color: #b8e0d6; font-weight: 400; letter-spacing: 0.02em; }
+    .page-sub { font-size: 14px; color: #bfdbfe; font-weight: 400; letter-spacing: 0.02em; }
     .page-sub b { color: #fff; font-weight: 700; }
 
     /* donut */
@@ -274,9 +274,9 @@
       display: inline-flex; align-items: center; gap: 6px;
     }
     .filter-btn:hover { color: var(--text); background: var(--surface-2); }
-    .filter-btn.active            { background: #e7f0ec; color: #0d1614; }
-    .filter-btn.active.f-done     { background: #3bbf8b; color: #0d1614; }
-    .filter-btn.active.f-pending  { background: #d99a4e; color: #0d1614; }
+    .filter-btn.active            { background: #e8eeff; color: #0d1020; }
+    .filter-btn.active.f-done     { background: #2563eb; color: #fff; }
+    .filter-btn.active.f-pending  { background: #d99a4e; color: #0d1020; }
     .filter-btn.active.f-blocked  { background: #d4567e; color: #fff; }
 
     .result-info { font-size: 11.5px; color: var(--dim); margin-left: auto; }
@@ -300,14 +300,14 @@
       display: flex; align-items: center; justify-content: center; gap: 6px;
     }
     .tab-btn:hover { color: var(--text); background: var(--surface-2); }
-    .tab-btn.active { color: #0d1614; background: var(--accent); box-shadow: 0 2px 10px rgba(45,212,191,0.4); font-weight: 700; }
+    .tab-btn.active { color: #fff; background: var(--accent); box-shadow: 0 2px 10px rgba(59,130,246,0.4); font-weight: 700; }
 
     .tab-count {
       font-size: 9.5px; font-weight: 700; min-width: 17px; height: 17px; border-radius: 99px;
       padding: 0 5px; display: inline-flex; align-items: center; justify-content: center;
       background: var(--surface-2); color: var(--dim);
     }
-    .tab-btn.active .tab-count { background: rgba(13,22,20,0.2); color: #0d1614; }
+    .tab-btn.active .tab-count { background: rgba(13,16,32,0.2); color: #fff; }
 
     /* ─── PROVINCE SECTION ────────────────────────── */
     .prov-section { margin-bottom: 34px; }
@@ -347,17 +347,17 @@
     }
     .proj-prog-wrap { flex: 1; min-width: 100px; }
     .proj-prog-meta { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--dim); margin-bottom: 5px; font-weight: 600; }
-    .proj-prog-track { height: 6px; background: #1c2b27; border-radius: 99px; overflow: hidden; }
+    .proj-prog-track { height: 6px; background: #1a2340; border-radius: 99px; overflow: hidden; }
     .proj-prog-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 1s cubic-bezier(0.25,1,0.5,1) 0.15s; }
-    .fill-100 { background: linear-gradient(90deg,#3bbf8b,#7ee8b2); }
-    .fill-hi  { background: linear-gradient(90deg,#3bbf8b,#a7f0cb); }
+    .fill-100 { background: linear-gradient(90deg,#2563eb,#60a5fa); }
+    .fill-hi  { background: linear-gradient(90deg,#2563eb,#bfdbfe); }
     .fill-mid { background: linear-gradient(90deg,#d99a4e,#f6c177); }
     .fill-lo  { background: linear-gradient(90deg,#d4567e,#f3a0b8); }
-    .fill-nil { background: #1c2b27; }
+    .fill-nil { background: #1a2340; }
 
     .proj-pct { font-size: 12.5px; font-weight: 800; min-width: 38px; text-align: right; }
     .pct-100 { color: var(--done); }
-    .pct-hi  { color: #a7f0cb; }
+    .pct-hi  { color: #bfdbfe; }
     .pct-mid { color: var(--pending); }
     .pct-lo  { color: var(--blocked); }
     .pct-nil { color: var(--dim); }
@@ -735,13 +735,13 @@ const G = globalStats();
   const total=G.total||1;
   const aDone=G.done/total*360, aPend=G.pending/total*360;
   d.style.background=`conic-gradient(
-    #34d399 0deg ${aDone}deg,
+    #60a5fa 0deg ${aDone}deg,
     #fbbf24 ${aDone}deg ${aDone+aPend}deg,
     #f87171 ${aDone+aPend}deg 360deg)`;
   const pct=Math.round(G.done/total*100);
   setTimeout(()=>animCount(document.getElementById('donutPct'),pct,1300,'%'),300);
   document.getElementById('donutLegend').innerHTML=`
-    <div class="legend-row"><span class="legend-dot" style="background:#34d399"></span>Done<b>${G.done}</b></div>
+    <div class="legend-row"><span class="legend-dot" style="background:#60a5fa"></span>Done<b>${G.done}</b></div>
     <div class="legend-row"><span class="legend-dot" style="background:#fbbf24"></span>Pending<b>${G.pending}</b></div>
     <div class="legend-row"><span class="legend-dot" style="background:#f87171"></span>Blocked<b>${G.blocked}</b></div>`;
 })();
@@ -932,3 +932,4 @@ toTop.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 </script>
 </body>
 </html>
+
