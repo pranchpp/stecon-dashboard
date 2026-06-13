@@ -509,7 +509,7 @@
 
     <div class="nav-date">
       <span class="nav-date-lbl">Last Updated</span>
-      <span class="nav-date-val">12 June 2026</span>
+      <span class="nav-date-val">13 June 2026</span>
     </div>
   </div>
 </header>
@@ -578,7 +578,7 @@
 
   <footer class="footer">
     <div class="footer-logo">🏗️ STECON · Site Construction</div>
-    <div class="footer-note">Pile Sequence Tracker &nbsp;·&nbsp; Confidential Internal Report &nbsp;·&nbsp; 2026-06-12</div>
+    <div class="footer-note">Pile Sequence Tracker &nbsp;·&nbsp; Confidential Internal Report &nbsp;·&nbsp; 2026-06-13</div>
   </footer>
 
 </div>
@@ -597,12 +597,14 @@ const PROVINCES = [
         {seq:"CEEC",      s:"pending", p:"waiting", t:"Waiting for Material Approval from CEEC", d:"2026-06-11"},
       ]},
       { code:"PFP", rows:[
-        {seq:"BPI",       s:"pending", p:"normal",  t:"Asked BPI for Pile Calculation (other structures — Except Warehouse 20m confirmed by CEEC)", d:"2026-06-12"},
-        {seq:"Team Site", s:"done",    p:"done",    t:"Pile length confirmed: 20m for Warehouse, CEEC holding pile",                                 d:"2026-06-12"},
+        {seq:"BPI",       s:"done",    p:"done",    t:"Pile calculation received (BOP excl. Warehouse)",                              d:"2026-06-13"},
+        {seq:"Team Site", s:"done",    p:"done",    t:"Pile length confirmed: 20m for Warehouse, CEEC holding pile",                  d:"2026-06-12"},
+        {seq:"QC",        s:"done",    p:"done",    t:"Sent pile calculation to QC for Material Approval (BOP excl. Warehouse)",      d:"2026-06-13"},
+        {seq:"CEEC",      s:"pending", p:"waiting", t:"Waiting for Material Approval from CEEC",                                      d:"2026-06-13"},
       ]},
       { code:"MPE", rows:[
         {seq:"BPI",       s:"done",    p:"done",    t:"Sent & under calculation",                                                                              d:"2026-06-10"},
-        {seq:"QC",        s:"done",    p:"done",    t:"Sent (suspected miswrite on pile length for Service Water)",                                            d:"2026-06-11"},
+        {seq:"CENTER",     s:"done",    p:"done",    t:"Sent (suspected miswrite on pile length for Service Water)",                                            d:"2026-06-11"},
         {seq:"Team Site", s:"pending", p:"urgent",  t:"Waiting to clarify detail of dowel bar of Service Water and Fire Water Storage Tank (4DB12x6m → 4DB16x6m)", d:"2026-06-11"},
       ]},
     ]
@@ -631,7 +633,7 @@ const PROVINCES = [
       { code:"KKE", rows:[
         {seq:"CENTER",          s:"done",    p:"done",    t:"Lot 8, 9, 10 already ordered (MR : 263700150)", d:"2026-06-12"},
         {seq:"BPI Procurement", s:"pending", p:"waiting", t:"Waiting for PO release — Lot 8, 9, 10",         d:"2026-06-12"},
-        {seq:"Tower Crane",     s:"done",    p:"done",    t:"Lot 6 (Tower Crane) — sent to BPI",             d:"2026-06-12"},
+        {seq:"CENTER",          s:"done",    p:"done",    t:"Lot 6 (Tower Crane) — sent to BPI",             d:"2026-06-12"},
       ]},
       { code:"PSD", rows:[
         {seq:"Team Site", s:"done",    p:"done",    t:"Pile Parameter received",                                                       d:"2026-06-10"},
@@ -641,8 +643,8 @@ const PROVINCES = [
       ]},
       { code:"PKP", rows:[
         {seq:"QC / CEEC",   s:"blocked", p:"waiting", t:"Waiting for Material Approval from CEEC",          d:"—"},
-        {seq:"BPI",         s:"done",    p:"done",    t:"Lot 5 clarification confirmed — BPI acknowledged", d:"2026-06-12"},
-        {seq:"Tower Crane", s:"done",    p:"done",    t:"Lot 6 (Tower Crane) — sent to BPI",                d:"2026-06-12"},
+        {seq:"CENTER",      s:"done",    p:"done",    t:"Lot 5 clarification confirmed — BPI acknowledged", d:"2026-06-12"},
+        {seq:"CENTER",      s:"done",    p:"done",    t:"Lot 6 (Tower Crane) — sent to BPI",                d:"2026-06-12"},
       ]},
     ]
   },
@@ -653,14 +655,21 @@ const PROVINCES = [
         {seq:"Team Site / CEEC",    s:"done",    p:"done",    t:"SI released & resolved",                                                         d:"2026-06-10"},
         {seq:"Team Site",           s:"done",    p:"done",    t:"MR file made, pile order sent",                                                  d:"2026-06-10"},
         {seq:"Administration",      s:"done",    p:"done",    t:"MR submitted, number received, item ordered",                                    d:"2026-06-11"},
-        {seq:"BPI Procurement",     s:"pending", p:"waiting", t:"Waiting for PO release",                                                         d:"2026-06-11"},
-        {seq:"CEEC",                s:"pending", p:"normal",  t:"Waiting for Project Coordinator / CEEC to clarify pile length of Steam Turbine", d:"2026-06-11"},
+        {seq:"BPI Procurement",     s:"pending", p:"waiting", t:"Waiting for PO release — ID Fan & Stack (MR: 264000088), BOP (MR: 264000077), Cooling Tower (separate PO)", d:"2026-06-13"},
+        {seq:"CEEC",                s:"done",    p:"done",    t:"Consulted with Project Coordinator — pile length for Steam Turbine clarified",  d:"2026-06-13"},
         {seq:"Project Coordinator", s:"done",    p:"done",    t:"MR sent to Project Coordinator",                                                 d:"2026-06-11"},
         {seq:"CEEC",                s:"done",    p:"done",    t:"ID Fans and Stacks — detail sent to BPI",                                        d:"2026-06-12"},
-        {seq:"BPI",                 s:"pending", p:"normal",  t:"ID Fans and Stacks — waiting for BPI pile calculation",                          d:"2026-06-12"},
+        {seq:"BPI",                 s:"done",    p:"done",    t:"ID Fans and Stacks — pile calculation received",                                d:"2026-06-13"},
+        {seq:"CENTER",              s:"done",    p:"done",    t:"ID Fans and Stacks — MR made, pile ordered (MR: 264000088)",                  d:"2026-06-13"},
+        {seq:"CENTER",              s:"done",    p:"done",    t:"BOP — MR made, pile ordered (MR: 264000077)",                                 d:"2026-06-13"},
+        {seq:"CENTER",              s:"done",    p:"done",    t:"Cooling Tower — additional piles ordered (separate PO)",                        d:"2026-06-13"},
       ]},
       { code:"GSE", rows:[
         {seq:"QC / CEEC", s:"blocked", p:"waiting", t:"Waiting for Material Approval from CEEC", d:"2026-06-10"},
+        {seq:"BPI",             s:"done",    p:"done",    t:"ID Fan and Stack — pile calculation received",            d:"2026-06-13"},
+        {seq:"CENTER",          s:"done",    p:"done",    t:"ID Fan and Stack + BOP — MR made, pile ordered (MR: 264100066)", d:"2026-06-13"},
+        {seq:"Administration",  s:"done",    p:"done",    t:"MR submitted, number received",                           d:"2026-06-13"},
+        {seq:"BPI Procurement", s:"pending", p:"waiting", t:"Waiting for PO release",                                  d:"2026-06-13"},
       ]},
     ]
   },
@@ -668,12 +677,14 @@ const PROVINCES = [
     name: "Chonburi",
     projects: [
       { code:"PWW1", rows:[
-        {seq:"Designer", s:"pending", p:"urgent",  t:"ID Fans and Stacks — still figuring out Moment and detail of Dowel",                     d:"2026-06-11"},
-        {seq:"QC",       s:"pending", p:"normal",  t:"Sent to QC — for Material Approval (Service and Water Tank) → (STECON Calculation file)", d:"2026-06-10"},
-        {seq:"BPI",      s:"done",    p:"done",    t:"BPI calculation received",                                                                d:"2026-06-11"},
+        {seq:"Designer",  s:"done",    p:"done",    t:"ID Fans and Stacks — Moment and dowel bar detail clarified",                                    d:"2026-06-13"},
+        {seq:"QC",        s:"done",    p:"done",    t:"Sent BPI Calculation to QC for Material Approval (Service Water and Fire Water Storage Tank)",   d:"2026-06-13"},
+        {seq:"BPI",       s:"pending", p:"urgent",  t:"Pile length summary prepared — ready to send to BPI for pile calculation (ID Fans and Stacks)", d:"2026-06-13"},
+        {seq:"CEEC",      s:"pending", p:"waiting", t:"Waiting for Material Approval from CEEC",                                                        d:"2026-06-13"},
       ]},
       { code:"PWW2", rows:[
-        {seq:"Designer", s:"pending", p:"urgent", t:"ID Fans and Stacks — still figuring out Moment and detail of Dowel", d:"2026-06-11"},
+        {seq:"Designer",  s:"done",    p:"done",    t:"ID Fans and Stacks — Moment and dowel bar detail clarified",                                    d:"2026-06-13"},
+        {seq:"BPI",       s:"pending", p:"urgent",  t:"Clarifying latest SI (Site Instruction) before pile calculation (ID Fans and Stacks)",          d:"2026-06-13"},
       ]},
     ]
   },
