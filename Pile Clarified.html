@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pile Clarification Tracker — STECON</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:            #eef1f6;
+      --surface:       #ffffff;
+      --surface-2:     #f7f9fc;
+      --surface-3:     #f0f3f9;
+      --border:        #e3e8f0;
+      --border-2:      #d4dbe8;
+
+      --primary:       #0891b2;
+      --primary-600:   #0e7490;
+      --primary-500:   #06b6d4;
+      --primary-soft:  #ecfeff;
+      --primary-br:    #a5f3fc;
+
+      --done:          #0e9f6e;
+      --done-bg:       #e6f6ef;
+      --done-br:       #bfe9d6;
+      --done-text:     #07764f;
+
+      --pending:       #d97706;
+      --pending-bg:    #fdf3e3;
+      --pending-br:    #f6dcae;
+      --pending-text:  #9a5b04;
+
+      --blocked:       #e11d48;
+      --blocked-bg:    #fdeaef;
+      --blocked-br:    #f8c6d3;
+      --blocked-text:  #a8123a;
+
+      --warning:       #ca8a04;
+      --warning-bg:    #fefce8;
+      --warning-br:    #fde68a;
+      --warning-text:  #a16207;
+
+      --text:          #131a2b;
+      --muted:         #5a6479;
+      --dim:           #94a0b5;
+
+      --shadow-xs:     0 1px 2px rgba(16,24,40,0.05);
+      --shadow-sm:     0 1px 3px rgba(16,24,40,0.07), 0 1px 2px rgba(16,24,40,0.04);
+      --shadow-md:     0 8px 22px rgba(16,24,40,0.09), 0 2px 6px rgba(16,24,40,0.05);
+      --radius:        16px;
+      --radius-sm:     11px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; position: relative;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(900px 480px at 100% -10%, rgba(8,145,178,0.10), transparent 60%),
+        radial-gradient(700px 420px at -5% 8%, rgba(14,159,110,0.06), transparent 55%);
+    }
+    .topbar, #app { position: relative; z-index: 1; }
+    ::selection { background: var(--primary-500); color: #fff; }
+
+    /* ─── HEADER ──────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: saturate(180%) blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: 1180px; margin: 0 auto;
+      display: flex; align-items: center; gap: 18px;
+      padding: 13px 28px;
+    }
+    .brand { display: flex; align-items: center; gap: 13px; flex-shrink: 0; }
+    .brand-mark {
+      width: 44px; height: 44px; border-radius: 13px;
+      background: linear-gradient(150deg, #0891b2 0%, #0e7490 55%, #155e75 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 16px rgba(8,116,144,0.34); flex-shrink: 0;
+    }
+    .brand-name { font-family: 'Sora', sans-serif; font-size: 16.5px; font-weight: 800; letter-spacing: 0.04em; line-height: 1.15; color: var(--text); }
+    .brand-sub  { font-size: 9.5px; font-weight: 700; color: var(--primary-600); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 2px; }
+
+    .search-box { flex: 1; max-width: 440px; margin-left: auto; position: relative; }
+    .search-box svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+    .search-input {
+      width: 100%; padding: 10px 14px 10px 40px;
+      border: 1px solid var(--border-2); border-radius: 11px;
+      background: var(--surface-2); color: var(--text);
+      font-family: inherit; font-size: 13.5px;
+      outline: none; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .search-input:focus { border-color: var(--primary-500); background: #fff; box-shadow: 0 0 0 4px rgba(6,182,212,0.13); }
+    .search-input::placeholder { color: var(--dim); }
+
+    .nav-date { text-align: right; flex-shrink: 0; border-left: 1px solid var(--border); padding-left: 16px; }
+    .nav-date-lbl { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: 0.13em; color: var(--dim); font-weight: 700; }
+    .nav-date-val { font-size: 13px; font-weight: 700; color: var(--muted); }
+
+    /* ─── LAYOUT ──────────────────────────────────── */
+    #app { max-width: 1180px; margin: 0 auto; padding: 34px 28px 90px; }
+    @keyframes fadeUp { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
+
+    /* ─── HERO ────────────────────────────────────── */
+    .hero {
+      display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: center;
+      margin-bottom: 22px; position: relative; overflow: hidden;
+      background: linear-gradient(115deg, #0e7490 0%, #0891b2 48%, #06b6d4 100%);
+      border-radius: 22px; padding: 32px 34px;
+      box-shadow: 0 20px 48px rgba(8,116,144,0.30);
+      opacity: 0; animation: fadeUp 0.5s ease 0.05s forwards;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(520px 300px at 88% -40%, rgba(255,255,255,0.20), transparent 60%),
+        radial-gradient(360px 240px at 8% 130%, rgba(255,255,255,0.10), transparent 60%);
+    }
+    .hero::after {
+      content: ''; position: absolute; right: -40px; top: -60px; width: 280px; height: 280px;
+      background-image: radial-gradient(rgba(255,255,255,0.16) 1.4px, transparent 1.4px);
+      background-size: 17px 17px;
+      -webkit-mask-image: radial-gradient(circle at center, #000 35%, transparent 70%);
+      mask-image: radial-gradient(circle at center, #000 35%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    @media (max-width: 780px) { .hero { grid-template-columns: 1fr; } }
+
+    .page-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+      color: rgba(255,255,255,0.78); margin-bottom: 11px;
+      display: flex; align-items: center; gap: 9px;
+    }
+    .page-eyebrow::before { content: ''; width: 26px; height: 2px; background: rgba(255,255,255,0.6); border-radius: 2px; }
+    .page-title {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(1.85rem, 4vw, 2.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 10px;
+      color: #fff; letter-spacing: -0.01em;
+    }
+    .page-sub { font-size: 14.5px; color: rgba(255,255,255,0.85); font-weight: 500; }
+    .page-sub b { color: #fff; font-weight: 800; }
+
+    /* donut */
+    .donut-card {
+      display: flex; align-items: center; gap: 20px;
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.22); border-radius: var(--radius);
+      padding: 18px 24px; backdrop-filter: blur(6px);
+    }
+    .donut { width: 92px; height: 92px; border-radius: 50%; position: relative; flex-shrink: 0; }
+    .donut::after { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: rgba(14,116,144,0.8); }
+    .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+    .donut-pct { font-size: 21px; font-weight: 800; color: #fff; line-height: 1; font-family: 'Sora', sans-serif; }
+    .donut-cap { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.7); margin-top: 4px; }
+    .donut-legend { font-size: 12px; color: rgba(255,255,255,0.85); display: grid; gap: 7px; }
+    .legend-row { display: flex; align-items: center; gap: 8px; white-space: nowrap; font-weight: 500; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+    .legend-row b { color: #fff; font-weight: 800; margin-left: auto; padding-left: 14px; }
+
+    /* ─── STAT STRIP ──────────────────────────────── */
+    .stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+      margin-bottom: 16px;
+      opacity: 0; animation: fadeUp 0.5s ease 0.15s forwards;
+    }
+    @media (max-width: 780px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+    .stat {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; box-shadow: var(--shadow-xs);
+      display: flex; align-items: center; gap: 14px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      cursor: default; position: relative; overflow: hidden;
+    }
+    .stat::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--primary-500);
+    }
+    .stat-done::before    { background: var(--done); }
+    .stat-pending::before { background: var(--pending); }
+    .stat-blocked::before { background: var(--blocked); }
+    .stat-warning::before { background: var(--warning); }
+    .stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .stat-icn {
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 19px;
+      background: var(--primary-soft); border: 1px solid var(--primary-br);
+    }
+    .stat-done    .stat-icn { background: var(--done-bg);    border-color: var(--done-br); }
+    .stat-pending .stat-icn { background: var(--pending-bg); border-color: var(--pending-br); }
+    .stat-blocked .stat-icn { background: var(--blocked-bg); border-color: var(--blocked-br); }
+    .stat-warning .stat-icn { background: var(--warning-bg); border-color: var(--warning-br); }
+
+    .stat-value { font-size: 1.7rem; font-weight: 800; line-height: 1; font-family: 'Sora', sans-serif; color: var(--text); }
+    .stat-done    .stat-value { color: var(--done); }
+    .stat-pending .stat-value { color: var(--pending); }
+    .stat-blocked .stat-value { color: var(--blocked); }
+    .stat-warning .stat-value { color: var(--warning); }
+    .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--dim); margin-top: 4px; }
+
+    /* ─── CONTROLS ────────────────────────────────── */
+    .controls {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin-bottom: 18px;
+      opacity: 0; animation: fadeUp 0.5s ease 0.25s forwards;
+    }
+    .filter-group {
+      display: flex; gap: 4px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px; padding: 5px;
+      box-shadow: var(--shadow-xs);
+    }
+    .filter-btn {
+      border: none; background: transparent; font-family: inherit;
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      padding: 7px 14px; border-radius: 8px; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .filter-btn:hover { color: var(--text); background: var(--surface-3); }
+    .filter-btn.active             { background: var(--primary-600); color: #fff; box-shadow: 0 3px 9px rgba(14,116,144,0.3); }
+    .filter-btn.active.f-done     { background: var(--done);    box-shadow: 0 3px 9px rgba(14,159,110,0.3); }
+    .filter-btn.active.f-pending  { background: var(--pending); box-shadow: 0 3px 9px rgba(217,119,6,0.3); }
+    .filter-btn.active.f-blocked  { background: var(--blocked); box-shadow: 0 3px 9px rgba(225,29,72,0.3); }
+    .filter-btn.active.f-warning  { background: var(--warning); box-shadow: 0 3px 9px rgba(202,138,4,0.3); }
+    .result-info { font-size: 12px; color: var(--dim); margin-left: auto; font-weight: 500; }
+
+    /* ─── TABS ────────────────────────────────────── */
+    .tab-bar {
+      display: flex; gap: 3px; overflow-x: auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 13px; padding: 5px; margin-bottom: 26px;
+      box-shadow: var(--shadow-xs);
+      opacity: 0; animation: fadeUp 0.5s ease 0.3s forwards;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 1; padding: 10px 13px; border: none; background: transparent;
+      color: var(--muted); font-family: inherit; font-size: 12.5px; font-weight: 600;
+      border-radius: 9px; cursor: pointer; white-space: nowrap;
+      transition: color 0.15s, background 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--surface-3); }
+    .tab-btn.active { color: var(--primary); background: var(--primary-soft); font-weight: 700; }
+    .tab-count {
+      font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 99px;
+      padding: 0 6px; display: inline-flex; align-items: center; justify-content: center;
+      background: var(--surface-3); color: var(--dim);
+    }
+    .tab-btn.active .tab-count { background: var(--primary-600); color: #fff; }
+
+    /* ─── PROVINCE SECTION ────────────────────────── */
+    .prov-section { margin-bottom: 36px; }
+    .prov-head { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .prov-name { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; letter-spacing: -0.01em; color: var(--text); }
+    .prov-pin {
+      width: 28px; height: 28px; border-radius: 9px; font-size: 14px;
+      background: var(--primary-soft); border: 1px solid var(--primary-br);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .prov-chips { display: flex; gap: 7px; margin-left: auto; flex-wrap: wrap; }
+    .chip { font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 99px; border: 1px solid; }
+    .chip-done    { background: var(--done-bg);    color: var(--done-text);    border-color: var(--done-br); }
+    .chip-pending { background: var(--pending-bg); color: var(--pending-text); border-color: var(--pending-br); }
+    .chip-blocked { background: var(--blocked-bg); color: var(--blocked-text); border-color: var(--blocked-br); }
+    .chip-warning { background: var(--warning-bg); color: var(--warning-text); border-color: var(--warning-br); }
+
+    /* ─── PROJECT CARD ────────────────────────────── */
+    .proj-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      margin-bottom: 16px; overflow: hidden; box-shadow: var(--shadow-xs);
+      transition: box-shadow 0.2s ease, border-color 0.2s;
+    }
+    .proj-card:hover { box-shadow: var(--shadow-md); border-color: var(--border-2); }
+    .proj-head {
+      display: flex; align-items: center; gap: 18px;
+      padding: 15px 20px; border-bottom: 1px solid var(--border);
+      background: var(--surface-2); cursor: pointer; user-select: none;
+      transition: background 0.15s;
+    }
+    .proj-head:hover { background: var(--surface-3); }
+    .proj-card.collapsed .proj-head { border-bottom-color: transparent; }
+    .proj-code {
+      font-family: 'Sora', sans-serif;
+      font-size: 14px; font-weight: 800; letter-spacing: 0.04em;
+      min-width: 60px;
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+      color: #fff; border-radius: 9px; padding: 7px 12px; text-align: center;
+      box-shadow: 0 3px 8px rgba(14,116,144,0.28);
+    }
+    .proj-prog-wrap { flex: 1; min-width: 100px; }
+    .proj-prog-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .proj-prog-track { height: 7px; background: var(--surface-3); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+    .proj-prog-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 1s cubic-bezier(0.25,1,0.5,1) 0.15s; }
+    .fill-100 { background: linear-gradient(90deg,#0e9f6e,#34d399); }
+    .fill-hi  { background: linear-gradient(90deg,#0891b2,#22d3ee); }
+    .fill-mid { background: linear-gradient(90deg,#d97706,#fbbf24); }
+    .fill-lo  { background: linear-gradient(90deg,#e11d48,#fb7185); }
+    .fill-nil { background: var(--border-2); }
+
+    .proj-pct { font-size: 13.5px; font-weight: 800; min-width: 42px; text-align: right; font-family: 'Sora', sans-serif; }
+    .pct-100 { color: var(--done); }
+    .pct-hi  { color: var(--primary-600); }
+    .pct-mid { color: var(--pending); }
+    .pct-lo  { color: var(--blocked); }
+
+    .proj-toggle {
+      width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); transition: transform 0.25s ease, background 0.15s;
+      border: 1px solid var(--border-2); background: var(--surface); font-size: 11px;
+    }
+    .proj-card.collapsed .proj-toggle { transform: rotate(-90deg); }
+    .proj-card.collapsed .proj-body { display: none; }
+
+    /* ─── TABLE ───────────────────────────────────── */
+    .proj-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    col.c-cat  { width: 20%; }
+    col.c-stat { width: 63%; }
+    col.c-date { width: 17%; }
+
+    .proj-table thead tr { background: var(--surface-2); }
+    .proj-table th {
+      padding: 10px 18px; text-align: left;
+      font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.11em; color: var(--dim);
+      border-bottom: 1px solid var(--border);
+    }
+    .proj-table th.th-date { text-align: right; }
+
+    .proj-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .proj-table tbody tr:last-child { border-bottom: none; }
+    .proj-table tbody tr:hover { background: var(--surface-2); }
+    .proj-table tbody tr.row-hide { display: none; }
+
+    .proj-table td { padding: 13px 18px; font-size: 13px; vertical-align: middle; line-height: 1.55; word-break: break-word; }
+    .td-cat  { color: var(--text); font-weight: 700; font-size: 12.5px; }
+    .td-date { color: var(--dim); font-size: 11.5px; text-align: right; white-space: nowrap; font-weight: 500; }
+
+    /* ─── BADGE ───────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: flex-start; gap: 9px;
+      font-size: 13px; line-height: 1.5; padding: 6px 12px; border-radius: 9px;
+      border: 1px solid transparent; font-weight: 500;
+    }
+    .badge-done    { background: var(--done-bg);    color: var(--done-text);    border-color: var(--done-br); }
+    .badge-pending { background: var(--pending-bg); color: var(--pending-text); border-color: var(--pending-br); }
+    .badge-blocked { background: var(--blocked-bg); color: var(--blocked-text); border-color: var(--blocked-br); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning-text); border-color: var(--warning-br); }
+
+    /* ─── FOOTER ──────────────────────────────────── */
+    .footer {
+      text-align: center; padding: 28px 0 0;
+      font-size: 11.5px; color: var(--dim); font-weight: 500;
+      border-top: 1px solid var(--border); margin-top: 32px;
+    }
+    .footer b { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- ─── TOPBAR ─────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">STECON</div>
+        <div class="brand-sub">Pile Clarified</div>
+      </div>
+    </div>
+
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a0b5" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" type="text" id="searchInput" placeholder="Search project or clarification item…" />
+    </div>
+
+    <div class="nav-date">
+      <span class="nav-date-lbl">Updated</span>
+      <span class="nav-date-val" id="navDate">2026-07-04</span>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ─── HERO ──────────────────────────────────── -->
+  <div class="hero">
+    <div>
+      <div class="page-eyebrow">STECON Pile Tracker</div>
+      <div class="page-title">Pile Clarification</div>
+      <div class="page-sub">Technical clarification status before pile ordering — <b>12 projects</b> across 5 provinces</div>
+    </div>
+    <div class="donut-card" id="heroDonut">
+      <div class="donut" id="donutEl">
+        <div class="donut-center">
+          <div class="donut-pct" id="donutPct">—</div>
+          <div class="donut-cap">Cleared</div>
+        </div>
+      </div>
+      <div class="donut-legend" id="donutLegend">
+        <div class="legend-row"><span class="legend-dot" style="background:#34d399"></span>Done<b id="cntDone">—</b></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#fbbf24"></span>Pending<b id="cntPending">—</b></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#fb7185"></span>Blocked<b id="cntBlocked">—</b></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#fde68a"></span>Warning<b id="cntWarning">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STATS ─────────────────────────────────── -->
+  <div class="stats" id="statsStrip">
+    <div class="stat stat-done">
+      <div class="stat-icn">✅</div>
+      <div><div class="stat-value" id="s-done">—</div><div class="stat-label">Clarified</div></div>
+    </div>
+    <div class="stat stat-pending">
+      <div class="stat-icn">⏳</div>
+      <div><div class="stat-value" id="s-pending">—</div><div class="stat-label">Pending</div></div>
+    </div>
+    <div class="stat stat-blocked">
+      <div class="stat-icn">🔒</div>
+      <div><div class="stat-value" id="s-blocked">—</div><div class="stat-label">Blocked</div></div>
+    </div>
+    <div class="stat stat-warning">
+      <div class="stat-icn">⚠️</div>
+      <div><div class="stat-value" id="s-warning">—</div><div class="stat-label">Needs Attention</div></div>
+    </div>
+  </div>
+
+  <!-- ─── FILTER CONTROLS ───────────────────────── -->
+  <div class="controls">
+    <div class="filter-group" id="statusFilter">
+      <button class="filter-btn active" data-s="all">All</button>
+      <button class="filter-btn f-done"    data-s="done">✅ Done</button>
+      <button class="filter-btn f-pending" data-s="pending">⏳ Pending</button>
+      <button class="filter-btn f-blocked" data-s="blocked">🔒 Blocked</button>
+      <button class="filter-btn f-warning" data-s="warning">⚠️ Warning</button>
+    </div>
+    <span class="result-info" id="resultInfo"></span>
+  </div>
+
+  <!-- ─── TABS ──────────────────────────────────── -->
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- ─── CONTENT ───────────────────────────────── -->
+  <div id="content"></div>
+
+  <div class="footer">
+    <b>STECON</b> · Pile Clarification Tracker · Updated <span id="footerDate">2026-07-04</span>
+  </div>
+</main>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const DATA = [
+  {
+    name: "Prachinburi",
+    icon: "🌿",
+    projects: [
+      { code: "GCE", rows: [
+        { cat: "ID Fan — Pile Section",    s: "pending", t: "Pile section to be clarified",           d: "2026-07-01" },
+        { cat: "ID Fan — Moment Problem",  s: "pending", t: "Moment detail to be clarified",          d: "2026-07-01" },
+        { cat: "Transformer — Ms / Vs",    s: "pending", t: "Ms and Vs not clarified yet",             d: "2026-07-01" },
+      ]},
+      { code: "PFP", rows: [
+        { cat: "ID Fan — Pile Section",    s: "pending", t: "Pile section to be clarified",           d: "2026-07-01" },
+        { cat: "ID Fan — Moment Problem",  s: "pending", t: "Moment detail to be clarified",          d: "2026-07-01" },
+        { cat: "Warehouse — Pile Order",   s: "pending", t: "Not ordered yet",                        d: "2026-07-01" },
+        { cat: "Transformer",              s: "pending", t: "TBC",                                    d: "2026-07-01" },
+        { cat: "Holding Pond",             s: "pending", t: "TBC",                                    d: "2026-07-01" },
+        { cat: "Final Inspection Pit",     s: "pending", t: "TBC",                                    d: "2026-07-01" },
+        { cat: "Sump Pit",                 s: "pending", t: "TBC",                                    d: "2026-07-01" },
+      ]},
+      { code: "MPE", rows: [
+        { cat: "ID Fan — Pile Section",                s: "pending", t: "Pile section to be clarified",           d: "2026-07-01" },
+        { cat: "ID Fan — Moment Problem",              s: "pending", t: "Moment detail to be clarified",          d: "2026-07-01" },
+        { cat: "Transformer — Ms / Vs",                s: "pending", t: "Ms and Vs not clarified yet",             d: "2026-07-01" },
+        { cat: "Truckscale Weighing Scale — Ms / Vs",  s: "pending", t: "Ms and Vs not clarified yet",             d: "2026-07-01" },
+        { cat: "Holding Pond",                         s: "pending", t: "TBC",                                    d: "2026-07-01" },
+        { cat: "Final Inspection Pit",                 s: "pending", t: "TBC",                                    d: "2026-07-01" },
+        { cat: "Sump Pit",                             s: "pending", t: "TBC",                                    d: "2026-07-01" },
+      ]},
+    ]
+  },
+  {
+    name: "Rayong",
+    icon: "🌊",
+    projects: [
+      { code: "TPP", rows: [
+        { cat: "Transformer", s: "pending", t: "TBC", d: "2026-07-04" },
+      ]},
+      { code: "MKP", rows: [
+        { cat: "Pile Balancing (Test Pile)",          s: "pending", t: "Waiting for pile balancing with test pile before making order", d: "2026-07-01" },
+        { cat: "ID Fan and Stack — Pile Section",     s: "warning", t: "Pile section change required (SQ.0.30 → SQ.0.40), clarification needed", d: "2026-07-04" },
+        { cat: "Holding Pond",                        s: "pending", t: "TBC", d: "2026-07-04" },
+        { cat: "Transformer",                         s: "pending", t: "TBC", d: "2026-07-04" },
+        { cat: "Final Inspection Pit",                s: "pending", t: "TBC", d: "2026-07-04" },
+      ]},
+    ]
+  },
+  {
+    name: "Ayutthaya",
+    icon: "🏛️",
+    projects: [
+      { code: "KKE", rows: [] },
+      { code: "PSD", rows: [
+        { cat: "ID Fan — Pile Section",     s: "pending", t: "Pile section needs to change — moment too high for SQ0.3",         d: "2026-07-01" },
+        { cat: "Material Approval (CEEC)",  s: "pending", t: "Material Approval not noticed / not approved yet by CEEC",        d: "2026-07-01" },
+      ]},
+      { code: "PKP", rows: [
+        { cat: "Material Approval (CEEC)", s: "blocked", t: "Material Approval rejected by CEEC — MR not sent yet",             d: "2026-07-01" },
+      ]},
+    ]
+  },
+  {
+    name: "Saraburi",
+    icon: "⛰️",
+    projects: [
+      { code: "TSE", rows: [] },
+      { code: "GSE", rows: [] },
+    ]
+  },
+  {
+    name: "Chonburi",
+    icon: "🌅",
+    projects: [
+      { code: "PWW1", rows: [
+        { cat: "Pile Parameter (BOP)", s: "blocked", t: "No pile parameter for BOP received yet", d: "2026-07-01" },
+      ]},
+      { code: "PWW2", rows: [
+        { cat: "Pile Balancing (Test Pile)",  s: "pending", t: "Waiting for pile balancing with test pile before making order", d: "2026-07-01" },
+        { cat: "Oil Tank — Compression Load", s: "pending", t: "Compression load to be clarified",                              d: "2026-07-01" },
+        { cat: "ID Fan — Pile Section",       s: "warning", t: "Pile section needs clarification — no Pile Parameter received for ID Fan", d: "2026-07-04" },
+      ]},
+    ]
+  },
+];
+// ── DATA_END ──────────────────────────────────────────────────────────────────
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function badgeHtml(s, t) {
+  const map = {
+    done:    { cls:'badge-done',    icon:'✅' },
+    pending: { cls:'badge-pending', icon:'⏳' },
+    blocked: { cls:'badge-blocked', icon:'🔒' },
+    warning: { cls:'badge-warning', icon:'⚠️' },
+  };
+  const m = map[s] || map.pending;
+  return `<span class="badge ${m.cls}">${m.icon} ${esc(t)}</span>`;
+}
+
+let activeTab = 'all', activeStatus = 'all', searchQ = '';
+
+function allRows() {
+  return DATA.flatMap(prov => prov.projects.flatMap(p => p.rows));
+}
+function countByStatus(rows) {
+  const c = { done:0, pending:0, blocked:0, warning:0 };
+  rows.forEach(r => { if(c[r.s] !== undefined) c[r.s]++; });
+  return c;
+}
+
+function buildStats() {
+  const rows = allRows();
+  const c = countByStatus(rows);
+  document.getElementById('s-done').textContent    = c.done;
+  document.getElementById('s-pending').textContent = c.pending;
+  document.getElementById('s-blocked').textContent = c.blocked;
+  document.getElementById('s-warning').textContent = c.warning;
+
+  const total = rows.length;
+  const cleared = c.done;
+  const pct = total ? Math.round(cleared / total * 100) : 0;
+  document.getElementById('donutPct').textContent = pct + '%';
+  document.getElementById('cntDone').textContent    = c.done;
+  document.getElementById('cntPending').textContent = c.pending;
+  document.getElementById('cntBlocked').textContent = c.blocked;
+  document.getElementById('cntWarning').textContent = c.warning;
+
+  const angle = pct / 100 * 360;
+  const donut = document.getElementById('donutEl');
+  donut.style.background = `conic-gradient(#34d399 0deg ${angle}deg, rgba(255,255,255,0.18) ${angle}deg 360deg)`;
+}
+
+function buildTabs() {
+  const tb = document.getElementById('tabBar');
+  tb.innerHTML = '';
+  const all = allRows();
+  const btn = (id, label, count) => {
+    const b = document.createElement('button');
+    b.className = 'tab-btn' + (activeTab === id ? ' active' : '');
+    b.dataset.tab = id;
+    b.innerHTML = `${esc(label)} <span class="tab-count">${count}</span>`;
+    b.onclick = () => { activeTab = id; render(); };
+    tb.appendChild(b);
+  };
+  btn('all', 'All Projects', DATA.flatMap(p=>p.projects).length);
+  DATA.forEach(prov => {
+    const cnt = prov.projects.length;
+    btn(prov.name, prov.icon + ' ' + prov.name, cnt);
+  });
+}
+
+function rowMatchesSearch(row, projCode, provName) {
+  if (!searchQ) return true;
+  const q = searchQ.toLowerCase();
+  return projCode.toLowerCase().includes(q)
+      || provName.toLowerCase().includes(q)
+      || row.cat.toLowerCase().includes(q)
+      || row.t.toLowerCase().includes(q);
+}
+
+function render() {
+  buildTabs();
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+  let totalVisible = 0;
+
+  const provinces = activeTab === 'all' ? DATA : DATA.filter(p => p.name === activeTab);
+
+  provinces.forEach(prov => {
+    const sec = document.createElement('div');
+    sec.className = 'prov-section';
+
+    let provDone=0, provPending=0, provBlocked=0, provWarning=0;
+
+    const cards = prov.projects.map(proj => {
+      const rows = proj.rows;
+      const vis = rows.filter(r => {
+        if (activeStatus !== 'all' && r.s !== activeStatus) return false;
+        if (!rowMatchesSearch(r, proj.code, prov.name)) return false;
+        return true;
+      });
+
+      const c = countByStatus(rows);
+      provDone    += c.done;
+      provPending += c.pending;
+      provBlocked += c.blocked;
+      provWarning += c.warning;
+
+      if (vis.length === 0) return null;
+      totalVisible += vis.length;
+
+      const total = rows.length;
+      const done  = c.done;
+      const pct   = total ? Math.round(done / total * 100) : 0;
+      const fillCls = pct === 100 ? 'fill-100' : pct >= 60 ? 'fill-hi' : pct >= 30 ? 'fill-mid' : done === 0 ? 'fill-nil' : 'fill-lo';
+      const pctCls  = pct === 100 ? 'pct-100' : pct >= 60 ? 'pct-hi'  : pct >= 30 ? 'pct-mid'  : 'pct-lo';
+
+      const trs = vis.map(r => `
+        <tr>
+          <td class="td-cat">${esc(r.cat)}</td>
+          <td>${badgeHtml(r.s, r.t)}</td>
+          <td class="td-date">${esc(r.d)}</td>
+        </tr>`).join('');
+
+      return `
+        <div class="proj-card">
+          <div class="proj-head" onclick="this.closest('.proj-card').classList.toggle('collapsed')">
+            <div class="proj-code">${esc(proj.code)}</div>
+            <div class="proj-prog-wrap">
+              <div class="proj-prog-meta">
+                <span>${done}/${total} clarified</span>
+                <span>${c.pending} pending${c.blocked ? ' · ' + c.blocked + ' blocked' : ''}${c.warning ? ' · ' + c.warning + ' attention' : ''}</span>
+              </div>
+              <div class="proj-prog-track">
+                <div class="proj-prog-fill ${fillCls}" style="width:${pct}%"></div>
+              </div>
+            </div>
+            <div class="proj-pct ${pctCls}">${pct}%</div>
+            <div class="proj-toggle">▾</div>
+          </div>
+          <div class="proj-body">
+            <table class="proj-table">
+              <colgroup><col class="c-cat"><col class="c-stat"><col class="c-date"></colgroup>
+              <thead><tr>
+                <th>Category</th><th>Status</th><th class="th-date">Date</th>
+              </tr></thead>
+              <tbody>${trs}</tbody>
+            </table>
+          </div>
+        </div>`;
+    }).filter(Boolean);
+
+    if (cards.length === 0) return;
+
+    const chips = [
+      provDone    ? `<span class="chip chip-done">${provDone} done</span>` : '',
+      provPending ? `<span class="chip chip-pending">${provPending} pending</span>` : '',
+      provBlocked ? `<span class="chip chip-blocked">${provBlocked} blocked</span>` : '',
+      provWarning ? `<span class="chip chip-warning">${provWarning} attention</span>` : '',
+    ].join('');
+
+    sec.innerHTML = `
+      <div class="prov-head">
+        <div class="prov-name"><span class="prov-pin">${prov.icon}</span>${esc(prov.name)}</div>
+        <div class="prov-chips">${chips}</div>
+      </div>
+      ${cards.join('')}
+    `;
+    content.appendChild(sec);
+  });
+
+  document.getElementById('resultInfo').textContent = `${totalVisible} item${totalVisible !== 1 ? 's' : ''} shown`;
+}
+
+// ── SEARCH ─────────────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQ = e.target.value.trim();
+  render();
+});
+
+// ── STATUS FILTER ──────────────────────────────────────────────────────────
+document.getElementById('statusFilter').addEventListener('click', e => {
+  const btn = e.target.closest('[data-s]');
+  if (!btn) return;
+  activeStatus = btn.dataset.s;
+  document.querySelectorAll('[data-s]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+});
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+buildStats();
+render();
+
+// animate progress bars
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  document.querySelectorAll('.proj-prog-fill').forEach(el => {
+    el.style.width = el.style.width; // re-trigger transition
+  });
+}));
+</script>
+</body>
+</html>
