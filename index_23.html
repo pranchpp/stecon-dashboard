@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STECON · Engineer Site Directory</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* STECON brand */
+    --brand-blue:#2d4199;
+    --brand-blue-2:#4257c4;
+    --brand-blue-dark:#1e2d6e;
+    --brand-red:#ec1c24;
+
+    --primary:#2d4199;
+    --primary-2:#4257c4;
+    --primary-soft:rgba(45,65,153,.08);
+    --primary-soft-2:rgba(45,65,153,.14);
+
+    --surface:#ffffff;
+    --surface-2:#f7f9fc;
+    --surface-3:#eef2f9;
+    --border:#e4e9f2;
+    --border-2:#d7dfec;
+
+    --ink:#0e1729;
+    --ink-2:#475069;
+    --ink-3:#8a93a8;
+
+    --ok:#0f9d76;
+    --warn:#e0a012;
+
+    --r-sm:8px;
+    --r:12px;
+    --r-lg:18px;
+    --shadow-1:0 1px 2px rgba(16,24,40,.04), 0 4px 14px rgba(16,24,40,.06);
+    --shadow-2:0 6px 16px rgba(16,24,40,.08), 0 18px 42px rgba(45,65,153,.10);
+    --shadow-pop:0 10px 30px rgba(45,65,153,.18);
+    --ease:cubic-bezier(.22,.9,.32,1);
+    --spring:cubic-bezier(.34,1.4,.5,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Prompt','Noto Sans Thai','Segoe UI',system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 560px at 8% -12%, #dbe3fb 0%, transparent 62%),
+      radial-gradient(900px 520px at 104% -6%, #e2ecfb 0%, transparent 58%),
+      radial-gradient(700px 500px at 60% 110%, #eaf0fb 0%, transparent 60%),
+      #f2f5fb;
+    display:flex; flex-direction:column;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- animations ---------- */
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes riseSm{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  @keyframes ring{0%{transform:scale(.7);opacity:.45}70%{transform:scale(1.9);opacity:0}100%{opacity:0}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @keyframes sheen{0%{background-position:-320px 0}100%{background-position:320px 0}}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:900;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    padding:14px 26px;
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(16px) saturate(1.3);
+    -webkit-backdrop-filter:blur(16px) saturate(1.3);
+    border-bottom:1px solid var(--border);
+    animation:rise .5s var(--ease) both;
+  }
+  .brand{display:flex; align-items:center; gap:13px; min-width:0;}
+  .brand-mark{
+    height:44px; border-radius:9px; overflow:hidden; flex-shrink:0;
+    box-shadow:0 4px 14px rgba(45,65,153,.22);
+    transition:transform .3s var(--spring);
+  }
+  .brand-mark:hover{transform:translateY(-2px) scale(1.03);}
+  .brand-mark img{height:100%; width:auto; display:block;}
+  .brand-txt h1{
+    margin:0; font-size:17px; font-weight:600; letter-spacing:.1px; line-height:1.25;
+  }
+  .brand-txt p{margin:1px 0 0; font-size:11.5px; color:var(--ink-3); font-weight:400;}
+
+  .head-spacer{flex:1;}
+
+  .searchbox{
+    position:relative; width:min(360px,42vw);
+  }
+  .searchbox svg{
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; color:var(--ink-3); pointer-events:none;
+  }
+  .searchbox input{
+    width:100%; height:40px; border-radius:999px;
+    border:1px solid var(--border-2); background:var(--surface);
+    padding:0 74px 0 36px;
+    font-family:inherit; font-size:13px; color:var(--ink);
+    transition:.2s var(--ease);
+  }
+  .searchbox input::placeholder{color:var(--ink-3);}
+  .searchbox input:focus{
+    outline:none; border-color:var(--primary-2);
+    box-shadow:0 0 0 4px var(--primary-soft);
+  }
+  .searchbox kbd{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    font-family:inherit; font-size:10px; color:var(--ink-3);
+    border:1px solid var(--border-2); border-bottom-width:2px;
+    border-radius:5px; padding:2px 6px; background:var(--surface-2);
+    pointer-events:none;
+  }
+  .searchbox.has-val kbd{display:none;}
+  .search-clear{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    width:24px;height:24px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--surface-3); color:var(--ink-2);
+    display:none; align-items:center; justify-content:center; font-size:14px;
+    transition:.15s;
+  }
+  .searchbox.has-val .search-clear{display:flex;}
+  .search-clear:hover{background:var(--primary); color:#fff;}
+
+  .head-stat{
+    display:flex; align-items:center; gap:9px;
+    padding:7px 14px 7px 11px; border-radius:999px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));
+    color:#fff; box-shadow:0 4px 14px rgba(45,65,153,.28);
+  }
+  .head-stat .hs-num{font-size:16px; font-weight:700; line-height:1;}
+  .head-stat .hs-lbl{font-size:10.5px; opacity:.85; line-height:1.1;}
+  .head-stat svg{width:17px;height:17px;opacity:.9;}
+
+  /* ---------- layout ---------- */
+  main{
+    flex:1; min-height:0;
+    display:grid;
+    grid-template-columns:minmax(0,1.32fr) minmax(390px,.88fr);
+    gap:20px; padding:20px 26px 26px;
+  }
+  @media (max-width:1080px){
+    main{grid-template-columns:1fr; }
+    .map-card{min-height:460px;}
+    .panel{min-height:620px;}
+  }
+  @media (max-width:640px){
+    header{padding:12px 16px; gap:12px;}
+    main{padding:14px 14px 18px; gap:14px;}
+    .searchbox{width:100%; order:3;}
+    .head-stat{display:none;}
+    .brand-mark{height:38px;}
+    .brand-txt h1{font-size:13.5px; line-height:1.2;}
+    .brand-txt p{font-size:10.5px;}
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r-lg);
+    box-shadow:var(--shadow-1);
+  }
+
+  /* ---------- map ---------- */
+  .map-card{
+    display:flex; flex-direction:column; padding:16px;
+    min-height:660px;
+    animation:rise .55s .05s var(--ease) both;
+  }
+  .map-head{display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;}
+  .map-head h2{
+    margin:0; font-size:12px; font-weight:600; letter-spacing:.55px;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  .map-head .mh-sep{flex:1;}
+  .chip-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    height:30px; padding:0 12px; border-radius:999px;
+    border:1px solid var(--border-2); background:var(--surface);
+    font-family:inherit; font-size:11.5px; font-weight:500; color:var(--ink-2);
+    cursor:pointer; transition:.18s var(--ease); white-space:nowrap;
+  }
+  .chip-btn svg{width:13px;height:13px;}
+  .chip-btn:hover{border-color:var(--primary-2); color:var(--primary); box-shadow:0 3px 10px rgba(45,65,153,.12);}
+  .chip-btn.on{background:var(--primary); border-color:var(--primary); color:#fff;}
+  .chip-btn:active{transform:scale(.96);}
+
+  .map-wrap{
+    flex:1; position:relative; border-radius:var(--r);
+    overflow:hidden; border:1px solid var(--border);
+    background:#e8eef7;
+  }
+  #leaflet-map{position:absolute; inset:0;}
+
+  .leaflet-control-zoom{border:none !important; box-shadow:var(--shadow-1) !important; border-radius:10px !important; overflow:hidden;}
+  .leaflet-control-zoom a{
+    background:var(--surface) !important; color:var(--primary) !important;
+    border-color:var(--border) !important; font-weight:600;
+    transition:.15s;
+  }
+  .leaflet-control-zoom a:hover{background:var(--primary) !important; color:#fff !important;}
+  .leaflet-control-attribution{
+    background:rgba(255,255,255,.86) !important; color:var(--ink-3) !important;
+    font-size:9.5px !important; font-family:inherit !important;
+  }
+  .leaflet-control-attribution a{color:var(--ink-2) !important;}
+
+  /* markers */
+  .mk{
+    position:relative; cursor:pointer;
+    display:flex; align-items:center; gap:7px;
+    padding:6px 11px 6px 8px; border-radius:10px;
+    background:var(--surface); border:1.5px solid var(--primary);
+    box-shadow:0 4px 14px rgba(16,24,40,.16);
+    font-family:'Prompt',sans-serif; white-space:nowrap;
+    transition:transform .22s var(--spring), box-shadow .22s var(--ease), background .2s;
+    animation:pop .42s var(--spring) both;
+  }
+  .mk::after{
+    content:''; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
+    border-width:6px 6px 0; border-style:solid;
+    border-color:var(--primary) transparent transparent transparent;
+  }
+  .mk-dot{
+    width:9px;height:9px;border-radius:50%;flex-shrink:0;
+    background:var(--primary); position:relative;
+  }
+  .mk-dot::before{
+    content:''; position:absolute; inset:-3px; border-radius:50%;
+    border:2px solid var(--primary); animation:ring 2.4s ease-out infinite;
+  }
+  .mk-txt{display:flex; flex-direction:column; line-height:1.15;}
+  .mk-name{font-size:11.5px; font-weight:600; color:var(--ink);}
+  .mk-cnt{font-size:9.5px; font-weight:500; color:var(--ink-3);}
+  .mk:hover{transform:translateY(-3px) scale(1.05); box-shadow:var(--shadow-pop);}
+  .mk.on{
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));
+    border-color:var(--primary);
+    box-shadow:0 0 0 5px rgba(45,65,153,.18), 0 8px 22px rgba(45,65,153,.4);
+  }
+  .mk.on .mk-name,.mk.on .mk-cnt{color:#fff;}
+  .mk.on .mk-cnt{opacity:.85;}
+  .mk.on .mk-dot{background:#fff;}
+  .mk.on .mk-dot::before{border-color:#fff;}
+  .mk.off{opacity:.55; border-color:var(--border-2); border-style:dashed;}
+  .mk.off::after{border-top-color:var(--border-2);}
+  .mk.off .mk-dot{background:var(--ink-3);}
+  .mk.off .mk-dot::before{display:none;}
+
+  .map-legend{
+    display:flex; gap:16px; flex-wrap:wrap; align-items:center;
+    padding-top:11px; font-size:11px; color:var(--ink-3);
+  }
+  .map-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .lg-dot{width:9px;height:9px;border-radius:50%;background:var(--primary);}
+  .lg-dot.grey{background:var(--ink-3); opacity:.5;}
+
+  /* ---------- panel ---------- */
+  .panel{
+    display:flex; flex-direction:column; overflow:hidden;
+    min-height:660px;
+    animation:rise .55s .12s var(--ease) both;
+  }
+  .panel-anim{animation:riseSm .34s var(--ease) both;}
+
+  .p-top{padding:20px 20px 0; flex-shrink:0;}
+  .p-tools{padding:14px 20px 14px; flex-shrink:0; border-bottom:1px solid var(--border);}
+  .p-scroll{flex:1; overflow-y:auto; padding:14px 20px 20px; min-height:0;}
+  .p-full{flex:1; overflow-y:auto; padding:20px; min-height:0;}
+
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#cdd6e6; border-radius:99px; border:2px solid var(--surface);}
+  ::-webkit-scrollbar-thumb:hover{background:#adb9d0;}
+
+  .crumbs{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-3); margin-bottom:12px;}
+  .crumbs .cb{cursor:pointer; transition:.15s; color:var(--ink-2);}
+  .crumbs .cb:hover{color:var(--primary);}
+  .crumbs .cb.cur{color:var(--ink); font-weight:600; cursor:default;}
+  .crumbs .sp{opacity:.45;}
+
+  .back-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    height:32px; padding:0 13px 0 9px; margin-bottom:14px;
+    border-radius:8px; border:1px solid var(--border-2); background:var(--surface);
+    font-family:inherit; font-size:12px; font-weight:500; color:var(--ink-2);
+    cursor:pointer; transition:.18s var(--ease);
+  }
+  .back-btn svg{width:14px;height:14px;}
+  .back-btn:hover{border-color:var(--primary); color:var(--primary); transform:translateX(-3px); box-shadow:0 4px 12px rgba(45,65,153,.12);}
+  .back-btn:active{transform:translateX(0) scale(.97);}
+
+  .p-title{font-size:21px; font-weight:600; margin:0 0 3px; letter-spacing:-.2px; line-height:1.25;}
+  .p-sub{font-size:12px; color:var(--ink-2); margin:0 0 14px;}
+
+  /* stat tiles */
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px; margin-bottom:20px;}
+  .tile{
+    position:relative; overflow:hidden;
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--r); padding:13px 14px;
+    transition:.22s var(--ease);
+    animation:riseSm .4s var(--ease) backwards;
+  }
+  .tile:nth-child(1){animation-delay:.03s} .tile:nth-child(2){animation-delay:.08s}
+  .tile:nth-child(3){animation-delay:.13s} .tile:nth-child(4){animation-delay:.18s}
+  .tile:hover{background:var(--surface); border-color:var(--primary-2); box-shadow:var(--shadow-2); transform:translateY(-2px);}
+  .tile::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:linear-gradient(180deg,var(--primary),var(--primary-2));
+    opacity:0; transition:.22s;
+  }
+  .tile:hover::before{opacity:1;}
+  .tile .t-lbl{font-size:10.5px; color:var(--ink-3); font-weight:500; margin-bottom:4px; letter-spacing:.2px;}
+  .tile .t-val{font-size:24px; font-weight:600; line-height:1; letter-spacing:-.5px;}
+  .tile .t-val small{font-size:12px; font-weight:500; color:var(--ink-3); margin-left:3px;}
+
+  /* hero */
+  .hero{
+    text-align:center; padding:8px 0 20px;
+    animation:riseSm .45s var(--ease) both;
+  }
+  .hero .h-num{
+    font-size:52px; font-weight:600; line-height:1; letter-spacing:-1.5px;
+    background:linear-gradient(135deg,var(--primary) 20%,var(--primary-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero .h-lbl{font-size:12px; color:var(--ink-3); margin-top:6px; letter-spacing:.3px;}
+
+  /* section heading */
+  .sec-h{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    margin:0 0 12px;
+  }
+  .sec-h h3{margin:0; font-size:12px; font-weight:600; letter-spacing:.45px; text-transform:uppercase; color:var(--ink-3);}
+  .sec-h .sh-note{font-size:11px; color:var(--ink-3);}
+
+  /* bar chart (single hue) */
+  .bars{display:flex; flex-direction:column; gap:11px; margin-bottom:22px;}
+  .bar-row{cursor:default; animation:riseSm .4s var(--ease) backwards;}
+  .bar-row.clickable{cursor:pointer; border-radius:8px; padding:5px 7px; margin:-5px -7px; transition:.16s;}
+  .bar-row.clickable:hover{background:var(--surface-2);}
+  .bar-row.clickable:hover .b-lbl{color:var(--primary);}
+  .bar-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:5px;}
+  .b-lbl{font-size:12px; color:var(--ink-2); font-weight:500; transition:.16s;
+         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .b-val{font-size:12px; color:var(--ink); font-weight:600; flex-shrink:0; font-variant-numeric:tabular-nums;}
+  .b-val em{font-style:normal; font-size:10.5px; color:var(--ink-3); font-weight:500; margin-left:4px;}
+  .b-track{height:9px; background:var(--surface-3); border-radius:0 5px 5px 0; overflow:hidden;}
+  .b-fill{
+    height:100%; border-radius:0 4px 4px 0;
+    background:linear-gradient(90deg,var(--primary),var(--primary-2));
+    transform-origin:left center;
+    animation:grow .7s var(--ease) both;
+  }
+  .b-fill.zero{background:var(--border-2);}
+
+  /* tools */
+  .mini-search{position:relative; margin-bottom:11px;}
+  .mini-search svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); width:14px;height:14px; color:var(--ink-3);}
+  .mini-search input{
+    width:100%; height:36px; border-radius:9px;
+    border:1px solid var(--border-2); background:var(--surface-2);
+    padding:0 12px 0 33px; font-family:inherit; font-size:12.5px; color:var(--ink);
+    transition:.18s var(--ease);
+  }
+  .mini-search input:focus{outline:none; background:var(--surface); border-color:var(--primary-2); box-shadow:0 0 0 3px var(--primary-soft);}
+
+  .tool-lbl{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin-bottom:7px;
+  }
+  .tool-lbl span:first-child{
+    font-size:10.5px; font-weight:600; letter-spacing:.45px;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  .tool-lbl .link{font-size:11px;}
+
+  .chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:11px;}
+  .chip{
+    display:inline-flex; align-items:center; gap:7px;
+    height:30px; padding:0 11px 0 8px; border-radius:999px;
+    border:1px solid var(--border-2); background:var(--surface);
+    font-family:inherit; font-size:11.5px; font-weight:500; color:var(--ink-2);
+    cursor:pointer; transition:.18s var(--ease); user-select:none;
+  }
+  /* the tick box that makes the chip read as a selectable filter */
+  .chip .c-box{
+    width:15px; height:15px; border-radius:5px; flex-shrink:0;
+    border:1.5px solid var(--border-2); background:var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+    transition:.18s var(--ease);
+  }
+  .chip .c-box svg{
+    width:9px; height:9px; opacity:0; transform:scale(.4);
+    transition:.18s var(--spring); color:var(--primary);
+  }
+  .chip .c-n{
+    font-size:10px; font-weight:600; padding:1px 6px; border-radius:99px;
+    background:var(--surface-3); color:var(--ink-3); font-variant-numeric:tabular-nums;
+  }
+  .chip:hover{border-color:var(--primary-2); color:var(--primary); box-shadow:0 2px 8px rgba(45,65,153,.12);}
+  .chip:hover .c-box{border-color:var(--primary-2);}
+  .chip.on{background:var(--primary); border-color:var(--primary); color:#fff;}
+  .chip.on .c-box{background:#fff; border-color:#fff;}
+  .chip.on .c-box svg{opacity:1; transform:scale(1);}
+  .chip.on .c-n{background:rgba(255,255,255,.22); color:#fff;}
+  .chip:active{transform:scale(.95);}
+  .chip.dim{opacity:.45;}
+
+  .tool-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .seg{display:inline-flex; background:var(--surface-3); border-radius:8px; padding:3px; gap:2px;}
+  .seg button{
+    border:none; background:transparent; cursor:pointer;
+    font-family:inherit; font-size:11px; font-weight:500; color:var(--ink-2);
+    padding:5px 10px; border-radius:6px; transition:.16s;
+  }
+  .seg button.on{background:var(--surface); color:var(--primary); font-weight:600; box-shadow:0 1px 3px rgba(16,24,40,.1);}
+  .seg button:not(.on):hover{color:var(--ink);}
+  .tool-row .grow{flex:1;}
+
+  /* people list */
+  .plist{display:flex; flex-direction:column; gap:7px;}
+  .prow{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 12px; border-radius:var(--r);
+    background:var(--surface-2); border:1px solid var(--border);
+    cursor:pointer; transition:.2s var(--ease);
+    animation:riseSm .32s var(--ease) backwards;
+  }
+  .prow:hover{
+    background:var(--surface); border-color:var(--primary-2);
+    transform:translateY(-2px); box-shadow:var(--shadow-2);
+  }
+  .prow:active{transform:translateY(0) scale(.995);}
+  .av{
+    width:38px;height:38px;border-radius:11px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:600;color:#fff;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));
+    box-shadow:0 3px 9px rgba(45,65,153,.28);
+  }
+  .pmeta{min-width:0;flex:1;}
+  .pname{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ppos{font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .pbadge{
+    font-size:9.5px;font-weight:600;letter-spacing:.3px;
+    padding:3px 8px;border-radius:99px;flex-shrink:0;
+    background:var(--primary-soft);color:var(--primary);
+  }
+
+  .empty{
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    padding:56px 22px;gap:11px;color:var(--ink-3);
+  }
+  .empty .e-ico{
+    width:52px;height:52px;border-radius:16px;
+    background:var(--surface-2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--primary-2);animation:floaty 3.4s ease-in-out infinite;
+  }
+  .empty .e-ico svg{width:24px;height:24px;}
+  .empty h4{margin:0;font-size:14px;font-weight:600;color:var(--ink-2);}
+  .empty p{margin:0;font-size:12.5px;line-height:1.55;max-width:250px;}
+  .link{color:var(--primary);cursor:pointer;font-weight:500;text-decoration:none;border-bottom:1px solid transparent;transition:.15s;}
+  .link:hover{border-bottom-color:var(--primary);}
+
+  /* profile */
+  .prof{display:flex;flex-direction:column;align-items:center;text-align:center;animation:riseSm .4s var(--ease) both;}
+  .prof-av{
+    width:92px;height:92px;border-radius:28px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;font-weight:600;color:#fff;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));
+    box-shadow:0 10px 28px rgba(45,65,153,.34);
+    margin-bottom:15px;
+    animation:pop .5s var(--spring) both;
+  }
+  .prof-name{font-size:20px;font-weight:600;margin:0 0 7px;letter-spacing:-.2px;}
+  .prof-role{
+    font-size:12px;font-weight:600;color:var(--primary);
+    background:var(--primary-soft);padding:5px 14px;border-radius:99px;margin-bottom:20px;
+  }
+  .fields{width:100%;display:flex;flex-direction:column;gap:9px;text-align:left;}
+  .field{
+    display:flex;align-items:center;gap:11px;
+    background:var(--surface-2);border:1px solid var(--border);
+    border-radius:var(--r);padding:11px 13px;
+    transition:.2s var(--ease);
+    animation:riseSm .34s var(--ease) backwards;
+  }
+  .field:nth-child(1){animation-delay:.03s}.field:nth-child(2){animation-delay:.07s}
+  .field:nth-child(3){animation-delay:.11s}.field:nth-child(4){animation-delay:.15s}
+  .field:nth-child(5){animation-delay:.19s}.field:nth-child(6){animation-delay:.23s}
+  .field:hover{background:var(--surface);border-color:var(--primary-2);box-shadow:var(--shadow-1);}
+  .field .f-ico{
+    width:32px;height:32px;border-radius:9px;flex-shrink:0;
+    background:var(--primary-soft);color:var(--primary);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .field .f-ico svg{width:16px;height:16px;}
+  .field .f-body{min-width:0;flex:1;}
+  .f-lbl{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;font-weight:500;display:block;}
+  .f-val{font-size:13px;color:var(--ink);font-weight:500;word-break:break-word;line-height:1.4;}
+  .copy-btn{
+    width:28px;height:28px;border-radius:8px;flex-shrink:0;
+    border:1px solid var(--border-2);background:var(--surface);
+    color:var(--ink-3);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.16s;
+  }
+  .copy-btn svg{width:13px;height:13px;}
+  .copy-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft);}
+  .copy-btn.done{background:var(--ok);border-color:var(--ok);color:#fff;}
+
+  /* toast */
+  #toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;font-size:12.5px;font-weight:500;
+    padding:10px 18px;border-radius:99px;box-shadow:0 10px 30px rgba(0,0,0,.28);
+    opacity:0;pointer-events:none;transition:.28s var(--ease);z-index:2000;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* tooltip for bars */
+  #bartip{
+    position:fixed;pointer-events:none;z-index:1500;
+    background:var(--ink);color:#fff;font-size:11.5px;font-weight:500;
+    padding:6px 10px;border-radius:7px;white-space:nowrap;
+    opacity:0;transition:opacity .14s;box-shadow:0 6px 18px rgba(0,0,0,.24);
+  }
+  #bartip.show{opacity:1;}
+
+  .divider{height:1px;background:var(--border);margin:4px 0 18px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark"><img src="data:image/png;base64,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" alt="STECON"></div>
+    <div class="brand-txt">
+      <h1>Sino-Thai Engineering &amp; Construction PCL</h1>
+      <p>Engineer Site Directory</p>
+    </div>
+  </div>
+
+  <div class="head-spacer"></div>
+
+  <div class="searchbox" id="searchbox">
+    <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input id="gsearch" type="text" placeholder="Search name, ID, position, site…" autocomplete="off">
+    <kbd>/</kbd>
+    <button class="search-clear" id="gclear" title="Clear">×</button>
+  </div>
+
+  <div class="head-stat">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M3 20c0-3.3 3.6-5.5 8-5.5s8 2.2 8 5.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="11" cy="8" r="4" stroke="currentColor" stroke-width="1.9"/></svg>
+    <div>
+      <div class="hs-num" id="hs-total">0</div>
+      <div class="hs-lbl">Total staff</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card map-card">
+    <div class="map-head">
+      <h2>Project Locations</h2>
+      <span class="mh-sep"></span>
+      <button class="chip-btn" id="btn-empty" title="Show or hide locations with no staff assigned">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 12s3.5-6.5 9-6.5S21 12 21 12s-3.5 6.5-9 6.5S3 12 3 12z" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.4" stroke="currentColor" stroke-width="1.9"/></svg>
+        <span id="btn-empty-txt">Hide empty</span>
+      </button>
+      <button class="chip-btn" id="btn-reset">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4m0 5h5M4 9a8 8 0 1 1 1.5 7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Reset view
+      </button>
+    </div>
+    <div class="map-wrap"><div id="leaflet-map"></div></div>
+    <div class="map-legend">
+      <span><i class="lg-dot"></i>Location with staff</span>
+      <span><i class="lg-dot grey"></i>No staff assigned</span>
+      <span style="margin-left:auto">Drag to pan · scroll to zoom · click a pin to open</span>
+    </div>
+  </section>
+
+  <section class="card panel" id="panel"></section>
+</main>
+
+<div id="toast"></div>
+<div id="bartip"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ========================= DATA ========================= */
+/* Each plant is now its own marker. Where several plants sit in the same
+   general area, real cluster coordinates (from Google Maps) are nudged a
+   short distance apart so each plant gets its own distinct pin nearby. */
+const LOCATIONS = [
+  { id:'kke',    name:'KKE',    label:'KKE',    lat:14.5076944, lng:100.5888333, sites:['KKE'] },
+  { id:'psd',    name:'PSD',    label:'PSD',    lat:14.4776944, lng:100.5728333, sites:['PSD'] },
+  { id:'pkp',    name:'PKP',    label:'PKP',    lat:14.4776944, lng:100.6048333, sites:['PKP'] },
+
+  { id:'tse',    name:'TSE',    label:'TSE',    lat:14.6288058, lng:100.9863913, sites:['TSE'] },
+  { id:'gse',    name:'GSE',    label:'GSE',    lat:14.6288058, lng:101.0103913, sites:['GSE'] },
+
+  { id:'snt',    name:'CENTER-SNT', label:'CENTER-SNT', lat:14.1188119, lng:100.2915865, sites:['SNT'] },
+
+  { id:'gce',    name:'GCE',    label:'GCE',    lat:13.936889,  lng:101.655556,  sites:['GCE'] },
+  { id:'pfp',    name:'PFP',    label:'PFP',    lat:13.906889,  lng:101.639556,  sites:['PFP'] },
+  { id:'mpe',    name:'MPE',    label:'MPE',    lat:13.906889,  lng:101.671556,  sites:['MPE'] },
+
+  { id:'bpp',    name:'BPP',    label:'BPP',    lat:13.7134984, lng:101.4674053, sites:['BPP'] },
+
+  { id:'pww1',   name:'PWW1',   label:'PWW1',   lat:13.0543889, lng:101.0660278, sites:['PWW1'] },
+  { id:'pww2',   name:'PWW2',   label:'PWW2',   lat:13.0543889, lng:101.0900278, sites:['PWW2'] },
+
+  { id:'tpp',    name:'TPP',    label:'TPP',    lat:12.992444,  lng:101.170833,  sites:['TPP'] },
+  { id:'mkp',    name:'MKP',    label:'MKP',    lat:12.992444,  lng:101.194833,  sites:['MKP'] },
+
+  { id:'solar',  name:'SOLAR',  label:'SOLAR',  lat:13.15,      lng:100.81,      sites:['SOLAR'] },
+
+  { id:'wtp',    name:'Water Treatment Plant', label:'Water Treatment Plant', lat:13.449441,  lng:100.995187,  sites:['WTP'] },
+];
+const OTHER_GROUP = { id:'other', name:'Other / HQ', sites:['OTHER'] };
+const GROUPS = [...LOCATIONS, OTHER_GROUP];
+const findGroup = id => GROUPS.find(g=>g.id===id);
+
+const SITE_TO_LOC = {};
+LOCATIONS.forEach(l=>l.sites.forEach(c=>{SITE_TO_LOC[c]=l.id;}));
+SITE_TO_LOC['OTHER']='other';
+
+const ROLES = [
+  { id:'se_senior', label:'Senior Engineer',      abbr:'SE'  },
+  { id:'pe',        label:'Project Engineer',     abbr:'PE'  },
+  { id:'se_site',   label:'Site Engineer',        abbr:'SE'  },
+  { id:'sup',       label:'Supervisor',           abbr:'Sup' },
+  { id:'fm',        label:'Foreman / Technician', abbr:'FM'  },
+  { id:'other',     label:'Others',               abbr:'Oth' },
+];
+const ROLE_MAP = Object.fromEntries(ROLES.map(r=>[r.id,r]));
+
+const PEOPLE = [{"id":"P02500","empNo":"P02500","name":"นายอดิกันต์ อำภา","positionThai":"วิศวกรอาวุโส","prodPosition":"SE","role":"se_senior","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05202","empNo":"P05202","name":"นายสุเมธ เปลี่ยนถาวรเจริญ","positionThai":"วิศวกรอาวุโส","prodPosition":"SE","role":"se_senior","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P04237","empNo":"P04237","name":"นายRAJKUMAR SARMA","positionThai":"Senior Professional Engineer","prodPosition":"SE","role":"se_senior","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26410C","site":"SOLAR"},{"id":"P03237","empNo":"P03237","name":"น.ส.วราภรณ์  นาคแท้","positionThai":"วิศวกรอาวุโส","prodPosition":"SE","role":"se_senior","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05035","empNo":"P05035","name":"นายณัฐพร ต๊ะพันธุ์","positionThai":"วิศวกรโครงการ 3","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P04552","empNo":"P04552","name":"นายจีรบุตร สุวรรณทัต","positionThai":"วิศวกรโครงการ 3","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05813","empNo":"P05813","name":"นายผาไท มวยดี","positionThai":"วิศวกรโครงการ 3","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P01292","empNo":"P01292","name":"นายนิติพัฒน์ คาลายานนท์","positionThai":"วิศวกรโครงการ 3","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06248","empNo":"P06248","name":"นายศรายุทธ ปลอดเถาว์","positionThai":"วิศวกรโครงการ 1","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P03831","empNo":"P03831","name":"นายรัฐนันท์ สรณะพิบูลย์","positionThai":"วิศวกรโครงการ 1","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P04815","empNo":"P04815","name":"นายณัฐวุฒิ การเพียร","positionThai":"วิศวกรโครงการ 1","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P04352","empNo":"P04352","name":"นายชนะพล ถาวร","positionThai":"วิศวกรโครงการ 1","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"P04825","empNo":"P04825","name":"นายสุพัฒน์ ทองฤทธิ์นุ่น","positionThai":"นายช่างโครงการ","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P00540","empNo":"P00540","name":"นายทนงศักดิ์ สุขวิสิฏฐ์","positionThai":"นายช่างโครงการ","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P04243","empNo":"P04243","name":"น.ส.ทีปวิชช์ อุดโหล","positionThai":"วิศวกรชำนาญการ 1","prodPosition":"PE","role":"pe","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P02296","empNo":"P02296","name":"นายสิทธิพร  จันทร","positionThai":"วิศวกรโครงการ 3","prodPosition":"PE","role":"pe","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P03225","empNo":"P03225","name":"นายทรงกรช  โกศัย","positionThai":"วิศวกรโครงการ 3","prodPosition":"PE","role":"pe","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26410C","site":"SOLAR"},{"id":"P06058","empNo":"P06058","name":"นายสมพงษ์ ศิริโอด","positionThai":"วิศวกรโครงการ 2","prodPosition":"PE","role":"pe","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P03073","empNo":"P03073","name":"นายพงษ์พันธ์ ศรีลาจันทร์","positionThai":"วิศวกรโครงการ 3","prodPosition":"PE","role":"pe","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P05272","empNo":"P05272","name":"นายภูมิธนัตธ์ เพชรถึง","positionThai":"วิศวกรโครงการ 2","prodPosition":"PE","role":"pe","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P04100","empNo":"P04100","name":"นายกัญจน์ พิศอ่อน","positionThai":"วิศวกรโครงการ 1","prodPosition":"PE","role":"pe","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P04840","empNo":"P04840","name":"ว่าที่ร้อยตรีเอกพงค์ คงยิ่ง","positionThai":"วิศวกรโครงการ 1","prodPosition":"PE","role":"pe","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P03176","empNo":"P03176","name":"นายกมล หวานฉ่ำ","positionThai":"นายช่างโครงการ","prodPosition":"PE","role":"pe","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26410C","site":"SOLAR"},{"id":"P04722","empNo":"P04722","name":"นายนิธิพัฒน์ แป้นทอง","positionThai":"วิศวกรชำนาญการ 2","prodPosition":"PE","role":"pe","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"GSE"},{"id":"P04742","empNo":"P04742","name":"น.ส.สุภาวดี ศรีลาชม","positionThai":"วิศวกรชำนาญการ 1","prodPosition":"PE","role":"pe","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05360","empNo":"P05360","name":"นายชยุตพล ชุณหชัชวาลกุล","positionThai":"วิศวกรชำนาญการ 1","prodPosition":"PE","role":"pe","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"GSE"},{"id":"P02033","empNo":"P02033","name":"นายอภินันท์ บูรณะ","positionThai":"วิศวกรชำนาญการ 3","prodPosition":"PE","role":"pe","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P03569","empNo":"P03569","name":"นายนิพรรค สภาพพร","positionThai":"วิศวกรชำนาญการ 2","prodPosition":"PE","role":"pe","groupDetail":"QC","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P04924","empNo":"P04924","name":"น.ส.ผกาวรรณ ด้วงมาก","positionThai":"วิศวกรชำนาญการ 1","prodPosition":"PE","role":"pe","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P03937","empNo":"P03937","name":"นายสรกฤช วงศ์วรรณา","positionThai":"วิศวกรชำนาญการ 1","prodPosition":"PE","role":"pe","groupDetail":"QC","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T10285","empNo":"T10285","name":"นายธีรพันธ์ พรหมเนตร","positionThai":"นายช่างชำนาญการ","prodPosition":"PE","role":"pe","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P05616","empNo":"P05616","name":"นายพิฆเนศ อัตถสุริยากุล","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05716","empNo":"P05716","name":"นายณัฐพงษ์ ขันตรีจิตร","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P05431","empNo":"P05431","name":"นายปรัชญา อุตรชน","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06452","empNo":"P06452","name":"นายพัฒนศักดิ์ ไชยฮะนิจ","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P03735","empNo":"P03735","name":"นายวชิรพล สุขชัย","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05239","empNo":"P05239","name":"นายวัชรพงษ์ ณ กาฬสินธุ์","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26490D","site":"WTP"},{"id":"P05847","empNo":"P05847","name":"นายไกรวิชท์ นาเมืองรักษ์","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05683","empNo":"P05683","name":"นายคุณากร โยทาวงษ์","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06009","empNo":"P06009","name":"นายสรธน พรหมทา","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P04578","empNo":"P04578","name":"นายฐาปกร สร้อยคำ","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P05670","empNo":"P05670","name":"นายจิรโชติ ใจเติบ","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P05834","empNo":"P05834","name":"นายพงศ์พิพัฒน์ มีทรัพย์","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05837","empNo":"P05837","name":"นายพรพินิต คนงาน","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06661","empNo":"P06661","name":"น.ส.ภิญญาพัชญ์ สีคุณ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06684","empNo":"P06684","name":"นายมูฮำหมัดไซนอล มะตาเฮ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06717","empNo":"P06717","name":"นายชิษณุชา ช่วยสุวรรณ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06315","empNo":"P06315","name":"น.ส.พนิดา  ภู่พันธ์ตระกูล","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06559","empNo":"P06559","name":"นายธนธรณ์ จิตต์เส้ง","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06662","empNo":"P06662","name":"นายปรานต์ ไชยภักดี","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06663","empNo":"P06663","name":"นายจักรกริช สุวรรณี","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06451","empNo":"P06451","name":"นายภูธนกฤษฎิ์ แควสยอง","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06549","empNo":"P06549","name":"นายฮัจซัน บ่าวเบ็ญหมัด","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06664","empNo":"P06664","name":"นายพิชญุตย์ เทียมเมฆ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06471","empNo":"P06471","name":"นายภานุพงศ์ ทิพย์อักษร","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06665","empNo":"P06665","name":"นายนนท์ธวัช ทัดทาอาทาตย์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06686","empNo":"P06686","name":"นายรชตะ ตั้งมิตรประชา","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06312","empNo":"P06312","name":"นายกันตินันท์ ศรีวะรมย์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06685","empNo":"P06685","name":"นายเจษฎา สุขเสาร์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"T11315","empNo":"T11315","name":"นายไพโรจน์ ชัยฤทธิ์","positionThai":"วิศวกร","prodPosition":"E3-E1","role":"se_site","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P04712","empNo":"P04712","name":"นายนวพล แซ่แต้","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06054","empNo":"P06054","name":"นายศราวุธ กระสาย","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P05403","empNo":"P05403","name":"นายสุรพงษ์ ใจสุข","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P05393","empNo":"P05393","name":"นายฤทธิเกียรติ กิตติชยารักษ์","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26490D","site":"WTP"},{"id":"P06525","empNo":"P06525","name":"นายอนุวัต ศรีสวัสดิ์","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06131","empNo":"P06131","name":"นายปกรณ์ ออกเวหา","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26410C","site":"GSE"},{"id":"P05935","empNo":"P05935","name":"นายนนทนง แสงประดับ","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06241","empNo":"P06241","name":"นายศุภกิตติ์ คงควร","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06066","empNo":"P06066","name":"นายอมรพัฒน์ ชูนครพัฒน์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06165","empNo":"P06165","name":"นายธีรวัฒน์ ขันคำ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P05765","empNo":"P05765","name":"นายอติยะ สายสะอาด","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05898","empNo":"P05898","name":"นายชนสรณ์ มาไกล","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06495","empNo":"P06495","name":"นายอมรเทพ คงยิ่ง","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T11043","empNo":"T11043","name":"นายศุภเดช เดชเกษม","positionThai":"วิศวกร","prodPosition":"E3-E1","role":"se_site","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P04732","empNo":"P04732","name":"น.ส.ปิยเนตร  มิคะมา","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P04577","empNo":"P04577","name":"น.ส.ณภาภัช  เกียรติเกษมสุข","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05228","empNo":"P05228","name":"นายพงศกร พันธุ์เณร","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05753","empNo":"P05753","name":"น.ส.ขวัญกมล  วรรณคุณ","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P04782","empNo":"P04782","name":"น.ส.ธษณามดี  เลิศชนบดี","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P05714","empNo":"P05714","name":"น.ส.เจนจิรา  โสภา","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05755","empNo":"P05755","name":"MissNAMFON LUNGTOON","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05784","empNo":"P05784","name":"นายชัยพร กลั่นเทศ","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05817","empNo":"P05817","name":"นายปณิธาน ปัดทุมแฝง","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P06108","empNo":"P06108","name":"น.ส.กันยารัตน์  โพธิ์ศรี","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26421C","site":"SNT"},{"id":"P06080","empNo":"P06080","name":"น.ส.หทัยทิพย์  เย็นเป็นสุข","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06565","empNo":"P06565","name":"น.ส.นภัสสร อาณาเขต","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06719","empNo":"P06719","name":"นายศุภณัฐ บำรุงวงษ์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06721","empNo":"P06721","name":"น.ส.จุฑาทิพย์ โสดา","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06698","empNo":"P06698","name":"น.ส.ปนัดดา คำโพก","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06161","empNo":"P06161","name":"น.ส.อัญชนิกา  เพ็ชรปราณี","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P06389","empNo":"P06389","name":"น.ส.นริศรา อ่อนจันทร์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P06718","empNo":"P06718","name":"น.ส.ชลลดา ป้อมบุปผา","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P06720","empNo":"P06720","name":"น.ส.กิ่งแก้ว ม่วงลี","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P06724","empNo":"P06724","name":"นายสรายุทธ์ ณ ถลาง","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P06609","empNo":"P06609","name":"น.ส.กษมา จันทร์เพ็ญ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06623","empNo":"P06623","name":"นายจีระวัฒน์ ยะชะระ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06699","empNo":"P06699","name":"น.ส.สุนิตา ลีลา","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06099","empNo":"P06099","name":"น.ส.ระพีพรรณ  คงแก้ว","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06390","empNo":"P06390","name":"น.ส.อาทิตยา สุขบัว","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06735","empNo":"P06735","name":"นายวรินทร อร่ามสินทรัพย์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"T12256","empNo":"T12256","name":"นายธนภัทร จรรยา","positionThai":"วิศวกร","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"T10569","empNo":"T10569","name":"น.ส.ภาวินี  บุญทศ","positionThai":"วิศวกร","prodPosition":"E3-E1","role":"se_site","groupDetail":"OE","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P05553","empNo":"P05553","name":"นายพชร ขันทอง","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05586","empNo":"P05586","name":"น.ส.ศุภนิดา  สุวรรณรังค์","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05376","empNo":"P05376","name":"นายวชิรพงศ์ แก้วลอดหล้า","positionThai":"วิศวกร 3","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06031","empNo":"P06031","name":"นายราชิต สงวนสัตย์","positionThai":"วิศวกร 2","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06320","empNo":"P06320","name":"นายภูดิท บุญประสพ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06585","empNo":"P06585","name":"นายธนัช แสงประสิทธิ์","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06703","empNo":"P06703","name":"นายพงษ์วริตร์ บุญถิน","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06586","empNo":"P06586","name":"นายอดุลวิทย์ ผาเจริญ","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06702","empNo":"P06702","name":"นายศรัณย์ ตันศิริพรภักดี","positionThai":"วิศวกร 1","prodPosition":"E3-E1","role":"se_site","groupDetail":"QC","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"P00533","empNo":"P00533","name":"นายสุพจน์ ทิพย์ศรีบุตร","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P00596","empNo":"P00596","name":"นายเทพ อินทร์ชำนาญ","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P01961","empNo":"P01961","name":"นายวิชิต ศรีชมชื่น","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P01457","empNo":"P01457","name":"นายสมยศ รุ่งเรือง","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P02331","empNo":"P02331","name":"นายสุรชิต ไชยทอง","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P02393","empNo":"P02393","name":"นายสุรศักดิ์ เป็นสุข","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05487","empNo":"P05487","name":"นายบัญชิต พูลทอง","positionThai":"ซุปเปอร์ไวเซอร์ 1","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P02336","empNo":"P02336","name":"นายสิทธิศักดิ์ สุดศิริ","positionThai":"ซุปเปอร์ไวเซอร์ 1","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T08106","empNo":"T08106","name":"นายมานพ โคกอ่อน","positionThai":"ซุปเปอร์ไวเซอร์","prodPosition":"SUP","role":"sup","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P02399","empNo":"P02399","name":"นายทนงศักดิ์ คำเรือง","positionThai":"ซุปเปอร์ไวเซอร์ 1","prodPosition":"SUP","role":"sup","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P03863","empNo":"P03863","name":"นายรัฐเขต ข่ายกระโทก","positionThai":"ซุปเปอร์ไวเซอร์ 1","prodPosition":"SUP","role":"sup","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P02337","empNo":"P02337","name":"นายสันติ ประทุมรัตน์","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P02402","empNo":"P02402","name":"นายชายแดน ถนอมทรัพย์","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P00922","empNo":"P00922","name":"นายพิเชษฐ์  คำเพราะ","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P02789","empNo":"P02789","name":"นายประมุข พึ่งรื่นรมณ์","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P02618","empNo":"P02618","name":"นายสฤษดิ์ ภาคชัย","positionThai":"ซุปเปอร์ไวเซอร์งานเขียนแบบ 2","prodPosition":"SUP","role":"sup","groupDetail":"Other","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P01968","empNo":"P01968","name":"นายณรงค์ฤทธิ์  วรรณชู","positionThai":"ซุปเปอร์ไวเซอร์ 2","prodPosition":"SUP","role":"sup","groupDetail":"Other","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P02615","empNo":"P02615","name":"นายโดม ด่านขุนทด","positionThai":"ซุปเปอร์ไวเซอร์ 1","prodPosition":"SUP","role":"sup","groupDetail":"Other","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P04478","empNo":"P04478","name":"นายณัฐพงศ์ คำเทศ","positionThai":"ซุปเปอร์ไวเซอร์ 1","prodPosition":"SUP","role":"sup","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P05468","empNo":"P05468","name":"นายศุภชัย พิมพ์สุวรรณ","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05998","empNo":"P05998","name":"นายชาญศักดิ์ พิมพ์สุวรรณ","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05146","empNo":"P05146","name":"นายณัฐวุฒิ นุวัติ","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P04814","empNo":"P04814","name":"นายสิทธิชัย บุญล้ำ","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P03868","empNo":"P03868","name":"นายธนพนธ์ เศวตจินดา","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P04444","empNo":"P04444","name":"นายมนตรี ปิ่นใจ","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05488","empNo":"P05488","name":"นายเสกสรรค์ พรหมศิลป์","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05495","empNo":"P05495","name":"นายอนุพงศ์ ทิพย์ศรีบุตร","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06278","empNo":"P06278","name":"นายพิษณุ แสนเมือง","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05489","empNo":"P05489","name":"นายพิริยะพงศ์ ป้องขวาพล","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P05494","empNo":"P05494","name":"น.ส.ถิรยา  พรมชมชา","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06477","empNo":"P06477","name":"นายอนุสรณ์ อินทร์เพ็ญ","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06022","empNo":"P06022","name":"นายปรัชญา แข็งแรง","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06267","empNo":"P06267","name":"นายสายยนต์ เชื้อช่างเหล็ก","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P06277","empNo":"P06277","name":"นายพลวัฒน์ ชะรินทร์","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06485","empNo":"P06485","name":"นายธรรมสรณ์ จันทะวงษ์","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06270","empNo":"P06270","name":"นายภาณุวัฒน์ ไชยเดช","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06500","empNo":"P06500","name":"นายศรายุทธ ศรีวิชัย","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05492","empNo":"P05492","name":"นายกฤษฎา บุษดี","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"P06501","empNo":"P06501","name":"นายบุญญฤทธิ์ แจ่มแสง","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"P06276","empNo":"P06276","name":"นายรัฐศักดิ์ เชื้อคำจันทร์","positionThai":"โฟร์แมน 1","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T09957","empNo":"T09957","name":"น.ส.ศรัญญา  หรดี","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T10272","empNo":"T10272","name":"นายเทิดศักดิ์ ทองหล่อ","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T10424","empNo":"T10424","name":"นายสุรชาย วงศาโรจน์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T10593","empNo":"T10593","name":"นายศักรินทร์ ช่วยรัมย์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T11159","empNo":"T11159","name":"นายนวพัชร นวนเนตร","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T11202","empNo":"T11202","name":"นายชูศักดิ์ ชะรินทร์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T11255","empNo":"T11255","name":"นายอรรถวุฒิ นุชมี","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T10466","empNo":"T10466","name":"นายอาทิตย์ โนนทิง","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T10889","empNo":"T10889","name":"นายขวัญชัย ผลจันทร์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T11528","empNo":"T11528","name":"นายอาทิตย์วรา แสงภารา","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T08395","empNo":"T08395","name":"น.ส.สมฤดี  อินทร์ราช","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T10136","empNo":"T10136","name":"นายชินกร โกดี","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T10311","empNo":"T10311","name":"นายพีระพัฒน์ ธรรมเก่","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T10543","empNo":"T10543","name":"นายวรวัฒน์ ยอดมงคล","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T10663","empNo":"T10663","name":"นายจิระพงศ์ ภูมิล","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T12228","empNo":"T12228","name":"นายฉัตรชัย ดวงดาว","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T08392","empNo":"T08392","name":"นายกฤษติน วิทยพงษ์พันธ์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T09691","empNo":"T09691","name":"นายบรรชา รอดเกษม","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T11130","empNo":"T11130","name":"นายจักรกฤษ ตรึกตรา","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T11131","empNo":"T11131","name":"นายธนาธิป เล้าศิริ","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T11141","empNo":"T11141","name":"นายชยพร พรชัย","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T12088","empNo":"T12088","name":"นายธนวัฒน์ อินต๊ะเสน","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T04545","empNo":"T04545","name":"นายยุทธชัย พรมเวียง","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T10436","empNo":"T10436","name":"นายอนุศิษฎ์ เจริญธัญกรณ์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T10533","empNo":"T10533","name":"นายนพกร จำปามูล","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T11106","empNo":"T11106","name":"นายสมภพ ปุญญประดิษฐ์พร","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T09939","empNo":"T09939","name":"นายณัฐพล ขวดแก้ว","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26490D","site":"WTP"},{"id":"P03862","empNo":"P03862","name":"นายสุขสันต์ นันทภักดิ์","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P05195","empNo":"P05195","name":"นายกุศล กระจ่างทอง","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P04504","empNo":"P04504","name":"นายกฤษฎา พูลกิ่ง","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"P05524","empNo":"P05524","name":"นายวรเชษฐ์ โพธิ์ชัย","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06296","empNo":"P06296","name":"นายชนกชนม์ พรมณี","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P06299","empNo":"P06299","name":"นายประพัฒน์ หร่ายกลาง","positionThai":"โฟร์แมน 1","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T10347","empNo":"T10347","name":"นายนพดล ข่ายกระโทก","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T08818","empNo":"T08818","name":"นายปฏิวัติ ภูสีเขียว","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T10589","empNo":"T10589","name":"นายวุฒิชัย บุตตะวงษ์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T09392","empNo":"T09392","name":"นายอภิสิทธิ์ วงษ์ดี","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T11172","empNo":"T11172","name":"นายประจักษ์ พันธุ์แตง","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T05202","empNo":"T05202","name":"นายวันเฉลิม ทาระสา","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T10313","empNo":"T10313","name":"นายจีรศักดิ์ มั่นยืน","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T11971","empNo":"T11971","name":"นายสิทธิพงษ์ ชูช้าง","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T10582","empNo":"T10582","name":"นายชัยปกรณ์ แก้วบุดตา","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26490D","site":"WTP"},{"id":"P06280","empNo":"P06280","name":"นายพิทักษ์ สอนตา","positionThai":"ช่างเทคนิค 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06488","empNo":"P06488","name":"นายบดินทร์ สิงหา","positionThai":"ช่างเทคนิค 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T10444","empNo":"T10444","name":"นายวิทวัส เขียนอักษร","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T10590","empNo":"T10590","name":"นายกิตติศักดิ์ พูลเพิ่ม","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T10818","empNo":"T10818","name":"นายนเรศ คำสุข","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T06902","empNo":"T06902","name":"นายณรงค์ศักดิ์ สุวงศ์เครือ","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T08311","empNo":"T08311","name":"นายศราวุธ หนองนา","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T08312","empNo":"T08312","name":"นายสถิตย์ พลราช","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T10518","empNo":"T10518","name":"นายยุทธศักดิ์ เลาลิน","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T12016","empNo":"T12016","name":"นายศิวกร คำเพราะ","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T04715","empNo":"T04715","name":"นายชัยวิชิต ศรีสมรส","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T10454","empNo":"T10454","name":"นายธราเทพ สุริยา","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T10500","empNo":"T10500","name":"นายณัฐธิชัย อัมพาไพ","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T10516","empNo":"T10516","name":"นายวิทูรย์ โพธิ์ดีรัมย์","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P04149","empNo":"P04149","name":"นายวีระศักดิ์ ศรียาคะบุตร","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P03872","empNo":"P03872","name":"นายนพดล เด็ดเดี่ยว","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P04141","empNo":"P04141","name":"นายชานน พึ่งเปี่ยม","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P03565","empNo":"P03565","name":"นายคมสันต์ บุตรดา","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P04836","empNo":"P04836","name":"นายวุฒิพงษ์ วงษ์ราช","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P04465","empNo":"P04465","name":"นายทศพล โชติราษี","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05490","empNo":"P05490","name":"นายเตา สุภาพ","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06493","empNo":"P06493","name":"นายสมพงษ์ แสนแก้ว","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P06498","empNo":"P06498","name":"นายมนัสเดช ศรีษะผา","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P06505","empNo":"P06505","name":"นายคณิต จางวางแก้ว","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T07191","empNo":"T07191","name":"นายสมศักดิ์ แก้วเล็ก","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T05053","empNo":"T05053","name":"นายณรงค์วัฒน์ คำเพราะ","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T11030","empNo":"T11030","name":"นายบุญเรือง ดวงโนแสน","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T08755","empNo":"T08755","name":"นายศุภกิจ วันละคำ","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Mech","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T10840","empNo":"T10840","name":"น.ส.กิตติยา  พุ่มพวง","positionThai":"ช่างเทคนิคงานเขียนแบบ","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T09334","empNo":"T09334","name":"นายสุกฤษฏิ์ สุทธิภาค","positionThai":"ช่างเทคนิคงานเขียนแบบ","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26410C","site":"SNT"},{"id":"P05173","empNo":"P05173","name":"นายเกียรติชัย นอสูงเนิน","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"P04476","empNo":"P04476","name":"นายธนวันต์ คุ้มขำ","positionThai":"โฟร์แมน 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06038","empNo":"P06038","name":"นายกฤษดา กาศเกษม","positionThai":"โฟร์แมน 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T05848","empNo":"T05848","name":"นายจักรกฤษณ์ แสนสะอินทร์","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T09704","empNo":"T09704","name":"นายศุภกร คณฑา","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T04871","empNo":"T04871","name":"นายวีรพงษ์ คำเปล่ง","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T11019","empNo":"T11019","name":"นายอาทิวราห์ ชวลิตอโนชากุล","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T10144","empNo":"T10144","name":"นายจิรโชติ โพธิ์บุญ","positionThai":"โฟร์แมน","prodPosition":"FM/Tech","role":"fm","groupDetail":"Other","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"P04483","empNo":"P04483","name":"นายจีรศักดิ์ หูไธสง","positionThai":"ช่างเทคนิค 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"P04156","empNo":"P04156","name":"นายพรหมลิขิต ถิตย์สรร","positionThai":"ช่างเทคนิค 3","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"P06029","empNo":"P06029","name":"นายอนิวัตติ์ วีระฐาเมธากุล","positionThai":"ช่างเทคนิค 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"P05170","empNo":"P05170","name":"นายก้องสยาม วรจิตต์","positionThai":"ช่างเทคนิค 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P06510","empNo":"P06510","name":"นายกิตติศักดิ์ สว่างพรม","positionThai":"ช่างเทคนิค 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"P05171","empNo":"P05171","name":"น.ส.กนกอร  ลีปา","positionThai":"ช่างเทคนิค 2","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"T07930","empNo":"T07930","name":"นายภากร ซื่อตรง","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T11154","empNo":"T11154","name":"นายศุภฤกษ์ ประกอบสุข","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T11156","empNo":"T11156","name":"นายเสกสรร แข็งแรง","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T11207","empNo":"T11207","name":"นายธนพล จิรจารุกิตต์","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26371C","site":"KKE"},{"id":"T08261","empNo":"T08261","name":"น.ส.อภิญญา  อ้วนล้ำ","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T10434","empNo":"T10434","name":"นายอภิวัฒน์ วงค์สา","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T11149","empNo":"T11149","name":"นายวิทยา ละครพล","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T12143","empNo":"T12143","name":"นายธีรพงศ์ จำปาหอม","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T08208","empNo":"T08208","name":"นายกฤษณะ จำเนียรพรหม","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T08353","empNo":"T08353","name":"นายเทิดศักดิ์ สุวรรณดี","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T10480","empNo":"T10480","name":"นายสุภัทรชัย เชื้อหงส์แก้ว","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26421C","site":"GCE"},{"id":"T08727","empNo":"T08727","name":"นายวันชัย ประทีป","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T09333","empNo":"T09333","name":"นางกิ่งแก้ว บุญเชิด","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T09916","empNo":"T09916","name":"นายอดิศักดิ์ คำวงศ์","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T12187","empNo":"T12187","name":"นายธีระภัทร ยะปะนัน","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T12188","empNo":"T12188","name":"นายอัครวินท์ ทิพย์เนตร","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T07023","empNo":"T07023","name":"นายพิริยะ แจ้ปัญญา","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T11256","empNo":"T11256","name":"นายวิชัยชาญ พันธ์ดี","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T12017","empNo":"T12017","name":"นายจิรายุ ทองคำดี","positionThai":"ช่างเทคนิค","prodPosition":"FM/Tech","role":"fm","groupDetail":"QC","detailOfWork":"-","jobAlias":"26510C","site":"BPP"},{"id":"T11853","empNo":"T11853","name":"นายพรสวรรค์ เพ็งขาเม","positionThai":"หัวหน้าคนงาน","prodPosition":"-","role":"other","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T12281","empNo":"T12281","name":"น.ส.ณัฏฐณิชา เชิดฉาย","positionThai":"สถาปนิก","prodPosition":"-","role":"other","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26471C","site":"PWW1"},{"id":"T09112","empNo":"T09112","name":"นายทวีป หอมหวล","positionThai":"ผู้ช่วยวิศวกร","prodPosition":"-","role":"other","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T09469","empNo":"T09469","name":"น.ส.ชไมพร  วงษ์คำคูณ","positionThai":"ผู้ช่วยวิศวกร","prodPosition":"-","role":"other","groupDetail":"Civil & Architect","detailOfWork":"-","jobAlias":"26451C","site":"TPP"},{"id":"T09559","empNo":"T09559","name":"นายพงศ์พันธ์ ขนอม","positionThai":"ผู้ช่วยวิศวกร","prodPosition":"-","role":"other","groupDetail":"M&E","detailOfWork":"-","jobAlias":"26401C","site":"TSE"},{"id":"T08355","empNo":"T08355","name":"นายธีระวัฒน์ ธิโสภา","positionThai":"ผู้ช่วยวิศวกร","prodPosition":"-","role":"other","groupDetail":"QC","detailOfWork":"-","jobAlias":"26371C","site":"KKE"}];
+
+/* ========================= STATE ========================= */
+let curLoc = null, curPerson = null, query = '';
+let listQuery = '', sortBy = 'role';
+let activeRoles = new Set(ROLES.map(r=>r.id));
+let showEmpty = true;
+
+const panel = document.getElementById('panel');
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const staffOf = g => PEOPLE.filter(p=>g.sites.includes(p.site));
+const initials = n => { const w=String(n).trim().split(/\s+/); return ((w[0]||'')[0]||'')+((w[1]||'')[0]||''); };
+
+/* ========================= ICONS ========================= */
+const I = {
+  id:'<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4.5" width="18" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8"/><circle cx="8.8" cy="10.6" r="2" stroke="currentColor" stroke-width="1.8"/><path d="M5.6 16c0-1.7 1.4-3 3.2-3s3.2 1.3 3.2 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14.6 9.6h4M14.6 13h4M14.6 16.2h2.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  tag:'<svg viewBox="0 0 24 24" fill="none"><path d="M11.4 3.6H5.2A1.6 1.6 0 0 0 3.6 5.2v6.2c0 .43.17.83.47 1.13l8.9 8.9c.62.62 1.64.62 2.26 0l6.2-6.2c.62-.62.62-1.64 0-2.26l-8.9-8.9a1.6 1.6 0 0 0-1.13-.47Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.9" cy="7.9" r="1.4" fill="currentColor"/></svg>',
+  map:'<svg viewBox="0 0 24 24" fill="none"><path d="M9 4.2 3.4 6.1v14L9 18.2l6 1.9 5.6-1.9v-14L15 6.1 9 4.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4.2v14M15 6.1v14" stroke="currentColor" stroke-width="1.8"/></svg>',
+  brief:'<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7.5" width="18" height="12.5" rx="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M8.6 7.5V5.9c0-.9.7-1.6 1.6-1.6h3.6c.9 0 1.6.7 1.6 1.6v1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 12.6h18" stroke="currentColor" stroke-width="1.8"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2.2" stroke="currentColor" stroke-width="1.9"/><path d="M15 6.2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5 10 17.5 19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none"><path d="M15 18.5 8.5 12 15 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  dl:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.8v11m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 17v1.7A2.3 2.3 0 0 0 6.8 21h10.4a2.3 2.3 0 0 0 2.3-2.3V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6" stroke="currentColor" stroke-width="1.8"/></svg>',
+};
+
+/* ========================= MAP ========================= */
+const map = L.map('leaflet-map', { zoomControl:false, minZoom:6, scrollWheelZoom:true }).setView([13.62,101.06], 8);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  { maxZoom:18, attribution:'&copy; OpenStreetMap &copy; CartoDB' }).addTo(map);
+
+const HOME_VIEW = { center:[13.62,101.06], zoom:8 };
+const markers = {};
+
+function markerHtml(loc, n, active, delay){
+  const cls = 'mk' + (active?' on':'') + (n===0?' off':'');
+  const d = delay!=null ? ` style="animation-delay:${delay}s"` : '';
+  return `<div class="${cls}"${d}><span class="mk-dot"></span><span class="mk-txt">`
+       + `<span class="mk-name">${esc(loc.label)}</span>`
+       + `<span class="mk-cnt">${n} staff</span></span></div>`;
+}
+function makeIcon(loc, active, delay){
+  return L.divIcon({ className:'mk-wrap', html:markerHtml(loc, staffOf(loc).length, active, delay),
+                     iconSize:[null,null], iconAnchor:[52,44] });
+}
+LOCATIONS.forEach((loc,i)=>{
+  const m = L.marker([loc.lat,loc.lng], { icon:makeIcon(loc,false,i*0.05) }).addTo(map);
+  m.on('click', ()=>selectLoc(loc.id));
+  markers[loc.id] = m;
+});
+function refreshMarkers(){
+  LOCATIONS.forEach(loc=>{
+    const n = staffOf(loc).length, m = markers[loc.id];
+    if(n===0 && !showEmpty){ if(map.hasLayer(m)) map.removeLayer(m); return; }
+    if(!map.hasLayer(m)) m.addTo(map);
+    m.setIcon(makeIcon(loc, curLoc===loc.id));
+  });
+}
+
+/* ========================= HELPERS ========================= */
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1700);
+}
+function countUp(el,target,ms){
+  const t0=performance.now(); const from=0;
+  (function step(now){
+    const k=Math.min(1,(now-t0)/ms), e=1-Math.pow(1-k,3);
+    el.textContent = Math.round(from+(target-from)*e).toLocaleString();
+    if(k<1) requestAnimationFrame(step);
+  })(t0);
+}
+function animatePanel(){
+  panel.classList.remove('panel-anim'); void panel.offsetWidth; panel.classList.add('panel-anim');
+}
+function crumbs(){
+  const p=[`<span class="cb ${!curLoc?'cur':''}" onclick="goHome()">Overview</span>`];
+  if(curLoc){ const g=findGroup(curLoc);
+    p.push('<span class="sp">/</span>',`<span class="cb ${!curPerson?'cur':''}" onclick="selectLoc('${curLoc}')">${esc(g.name)}</span>`); }
+  if(curPerson) p.push('<span class="sp">/</span>','<span class="cb cur">Profile</span>');
+  return `<div class="crumbs">${p.join('')}</div>`;
+}
+function barRow(label, val, max, opts){
+  opts = opts || {};
+  const pct = max>0 ? (val/max*100) : 0;
+  const share = opts.total ? ` <em>${Math.round(val/opts.total*100)}%</em>` : '';
+  const click = opts.onclick ? ` onclick="${opts.onclick}"` : '';
+  return `<div class="bar-row ${opts.onclick?'clickable':''}"${click} data-tip="${esc(label)}: ${val} staff"
+            style="animation-delay:${(opts.i||0)*0.05}s">
+    <div class="bar-head"><span class="b-lbl">${esc(label)}</span><span class="b-val">${val}${share}</span></div>
+    <div class="b-track"><div class="b-fill ${val===0?'zero':''}" style="width:${Math.max(pct,val>0?2:1.5)}%;animation-delay:${(opts.i||0)*0.05}s"></div></div>
+  </div>`;
+}
+
+/* ========================= VIEWS ========================= */
+function render(){
+  if(query.trim()) renderSearch();
+  else if(curPerson) renderProfile();
+  else if(curLoc) renderLoc();
+  else renderOverview();
+  animatePanel();
+}
+
+function renderOverview(){
+  const total = PEOPLE.length;
+  // positions stay in ROLES order = seniority (Senior Eng → PE → Site Eng → Sup → FM → Others)
+  const byRole = ROLES.map(r=>({r, n:PEOPLE.filter(p=>p.role===r.id).length}));
+  const byLoc = GROUPS.map(g=>({g, n:staffOf(g).length})).sort((a,b)=>b.n-a.n);
+  const maxRole = Math.max(...byRole.map(x=>x.n));
+  const maxLoc  = Math.max(...byLoc.map(x=>x.n));
+  const activeSites = new Set(PEOPLE.map(p=>p.site).filter(s=>s!=='OTHER')).size;
+  const activeLocs  = byLoc.filter(x=>x.n>0 && x.g.id!=='other').length;
+
+  panel.innerHTML = `
+    <div class="p-full">
+      ${crumbs()}
+      <div class="hero">
+        <div class="h-num" id="hero-n">0</div>
+        <div class="h-lbl">Engineering &amp; site staff on record</div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><div class="t-lbl">Locations</div><div class="t-val">${activeLocs}<small>/ ${LOCATIONS.length}</small></div></div>
+        <div class="tile"><div class="t-lbl">Active jobs</div><div class="t-val">${activeSites}</div></div>
+        <div class="tile"><div class="t-lbl">Positions</div><div class="t-val">${ROLES.length}</div></div>
+        <div class="tile"><div class="t-lbl">Other / HQ</div><div class="t-val">${staffOf(OTHER_GROUP).length}</div></div>
+      </div>
+
+      <div class="sec-h"><h3>Staff by position</h3><span class="sh-note">${total} total</span></div>
+      <div class="bars">
+        ${byRole.map((x,i)=>barRow(x.r.label+' ('+x.r.abbr+')', x.n, maxRole, {total, i})).join('')}
+      </div>
+
+      <div class="sec-h"><h3>Staff by location</h3><span class="sh-note">click to open</span></div>
+      <div class="bars">
+        ${byLoc.map((x,i)=>barRow(x.g.name, x.n, maxLoc, {total, i, onclick:`selectLoc('${x.g.id}')`})).join('')}
+      </div>
+    </div>`;
+  countUp(document.getElementById('hero-n'), total, 900);
+  bindTips();
+}
+
+function locPeople(){
+  const g = findGroup(curLoc);
+  let list = staffOf(g).filter(p=>activeRoles.has(p.role));
+  const q = listQuery.trim().toLowerCase();
+  if(q) list = list.filter(p =>
+    p.name.toLowerCase().includes(q) || p.empNo.toLowerCase().includes(q) ||
+    p.positionThai.toLowerCase().includes(q) || p.site.toLowerCase().includes(q) ||
+    (p.groupDetail||'').toLowerCase().includes(q));
+  const order = { se_senior:0, pe:1, se_site:2, sup:3, fm:4, other:5 };
+  if(sortBy==='name') list.sort((a,b)=>a.name.localeCompare(b.name,'th'));
+  else if(sortBy==='role') list.sort((a,b)=>(order[a.role]-order[b.role])||a.name.localeCompare(b.name,'th'));
+  else list.sort((a,b)=>a.empNo.localeCompare(b.empNo));
+  return list;
+}
+
+function renderLoc(){
+  const g = findGroup(curLoc);
+  const all = staffOf(g);
+  const list = locPeople();
+  const isOther = g.id==='other';
+
+  panel.innerHTML = `
+    <div class="p-top">
+      ${crumbs()}
+      <button class="back-btn" onclick="goHome()">${I.back} Overview</button>
+      <div class="p-title">${esc(g.name)}</div>
+      <div class="p-sub">${all.length} staff${isOther?' · not tied to a mapped site':''}</div>
+    </div>
+    <div class="p-tools">
+      <div class="mini-search">
+        ${I.search}
+        <input id="lsearch" type="text" placeholder="Filter within ${esc(g.label||g.name)}…" value="${esc(listQuery)}">
+      </div>
+      <div class="tool-lbl">
+        <span>Filter by position — tap to toggle</span>
+        ${activeRoles.size!==ROLES.length?`<span class="link" onclick="resetRoles()">Select all</span>`:''}
+      </div>
+      <div class="chips">
+        ${ROLES.map(r=>{
+          const n = all.filter(p=>p.role===r.id).length;
+          const on = activeRoles.has(r.id);
+          return `<span class="chip ${on?'on':''} ${n===0?'dim':''}" onclick="toggleRole('${r.id}')"
+                        role="checkbox" aria-checked="${on}" title="${on?'Click to hide':'Click to show'} ${esc(r.label)}">
+                    <span class="c-box">${I.check}</span>${esc(r.label)} <span class="c-n">${n}</span></span>`;
+        }).join('')}
+      </div>
+      <div class="tool-row">
+        <div class="seg">
+          <button class="${sortBy==='role'?'on':''}" onclick="setSort('role')">Position</button>
+          <button class="${sortBy==='name'?'on':''}" onclick="setSort('name')">Name</button>
+          <button class="${sortBy==='id'?'on':''}" onclick="setSort('id')">ID</button>
+        </div>
+        <span class="grow"></span>
+        <button class="chip-btn" onclick="exportCsv()">${I.dl} CSV</button>
+      </div>
+    </div>
+    <div class="p-scroll">
+      <div class="sec-h"><h3>${list.length} shown</h3>${list.length!==all.length?`<span class="sh-note">of ${all.length}</span>`:''}</div>
+      ${list.length ? `<div class="plist">${list.map((p,i)=>personRow(p,i)).join('')}</div>`
+        : emptyListHtml()}
+    </div>`;
+
+  const inp = document.getElementById('lsearch');
+  inp.addEventListener('input', e=>{ listQuery=e.target.value; refreshList(); });
+}
+
+function refreshList(){
+  const g = findGroup(curLoc), all = staffOf(g), list = locPeople();
+  const sc = panel.querySelector('.p-scroll');
+  sc.innerHTML = `<div class="sec-h"><h3>${list.length} shown</h3>${list.length!==all.length?`<span class="sh-note">of ${all.length}</span>`:''}</div>`
+    + (list.length ? `<div class="plist">${list.map((p,i)=>personRow(p,i)).join('')}</div>`
+      : emptyListHtml());
+}
+
+function emptyListHtml(){
+  if(!activeRoles.size) return `<div class="empty"><div class="e-ico">${I.search}</div>
+      <h4>No position selected</h4>
+      <p>Tick at least one position above, or <span class="link" onclick="resetRoles()">select all</span>.</p></div>`;
+  return `<div class="empty"><div class="e-ico">${I.search}</div><h4>No matches</h4>
+      <p>Try a different name or ID, or tick another position above.</p></div>`;
+}
+
+function personRow(p, i){
+  return `<div class="prow" onclick="selectPerson('${p.id}')" style="animation-delay:${Math.min(i,14)*0.028}s">
+    <div class="av">${esc(initials(p.name))}</div>
+    <div class="pmeta">
+      <div class="pname">${esc(p.name)}</div>
+      <div class="ppos">${esc(p.positionThai)}${p.groupDetail && p.groupDetail!=='-' ? ' · '+esc(p.groupDetail) : ''}</div>
+    </div>
+    <span class="pbadge" title="${esc(ROLE_MAP[p.role].label)}">${esc(ROLE_MAP[p.role].abbr)}</span>
+  </div>`;
+}
+
+function renderSearch(){
+  const q = query.trim().toLowerCase();
+  const hits = PEOPLE.filter(p =>
+    p.name.toLowerCase().includes(q) || p.empNo.toLowerCase().includes(q) ||
+    p.positionThai.toLowerCase().includes(q) || p.site.toLowerCase().includes(q) ||
+    (p.groupDetail||'').toLowerCase().includes(q) ||
+    ROLE_MAP[p.role].label.toLowerCase().includes(q)
+  ).slice(0,80);
+
+  panel.innerHTML = `
+    <div class="p-top">
+      <div class="crumbs"><span class="cb" onclick="clearSearch()">Overview</span><span class="sp">/</span><span class="cb cur">Search</span></div>
+      <button class="back-btn" onclick="clearSearch()">${I.back} Clear search</button>
+      <div class="p-title">“${esc(query.trim())}”</div>
+      <div class="p-sub">${hits.length}${hits.length===80?'+':''} match${hits.length===1?'':'es'} across all locations</div>
+    </div>
+    <div class="p-scroll">
+      ${hits.length ? `<div class="plist">${hits.map((p,i)=>{
+        const g = findGroup(SITE_TO_LOC[p.site]);
+        return `<div class="prow" onclick="selectPerson('${p.id}')" style="animation-delay:${Math.min(i,14)*0.028}s">
+          <div class="av">${esc(initials(p.name))}</div>
+          <div class="pmeta">
+            <div class="pname">${esc(p.name)}</div>
+            <div class="ppos">${esc(p.empNo)} · ${esc(g?g.label||g.name:'—')} · ${esc(p.site)}</div>
+          </div>
+          <span class="pbadge" title="${esc(ROLE_MAP[p.role].label)}">${esc(ROLE_MAP[p.role].abbr)}</span>
+        </div>`;}).join('')}</div>`
+      : `<div class="empty"><div class="e-ico">${I.search}</div><h4>Nothing found</h4>
+           <p>No staff match “${esc(query.trim())}”. Try part of a name, an employee ID like P02500, or a job code like GCE.</p></div>`}
+    </div>`;
+}
+
+function renderProfile(){
+  const p = PEOPLE.find(x=>x.id===curPerson);
+  const locId = SITE_TO_LOC[p.site], g = locId?findGroup(locId):null;
+  const role = ROLE_MAP[p.role];
+  const f = (ico,lbl,val,copy) => `<div class="field">
+      <div class="f-ico">${ico}</div>
+      <div class="f-body"><span class="f-lbl">${lbl}</span><span class="f-val">${esc(val)}</span></div>
+      ${copy?`<button class="copy-btn" onclick="copyVal(this,'${esc(val)}')" title="Copy">${I.copy}</button>`:''}
+    </div>`;
+
+  panel.innerHTML = `
+    <div class="p-full">
+      ${crumbs()}
+      <button class="back-btn" onclick="selectLoc('${locId}')">${I.back} ${esc(g?g.name:'Back')}</button>
+      <div class="prof">
+        <div class="prof-av">${esc(initials(p.name))}</div>
+        <div class="prof-name">${esc(p.name)}</div>
+        <div class="prof-role">${esc(role.label)} (${esc(role.abbr)})</div>
+        <div class="fields">
+          ${f(I.id,'Employee No', p.empNo, true)}
+          ${f(I.id,'Position (Thai)', p.positionThai)}
+          ${f(I.tag,'Productivity Position', p.prodPosition)}
+          ${f(I.brief,'Group Detail of Work', p.groupDetail)}
+          ${g?f(I.map,'Workplace', g.name):''}
+          ${f(I.tag,'Job Alias', p.jobAlias)}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ========================= ACTIONS ========================= */
+function goHome(){ curLoc=null; curPerson=null; query=''; syncSearchUi(); refreshMarkers(); render(); }
+function resetListState(){
+  listQuery=''; sortBy='role'; activeRoles = new Set(ROLES.map(r=>r.id));
+}
+// Only wipe the filters/search/sort when we're actually moving to a DIFFERENT
+// location. Coming back from a profile (or re-clicking the same pin) keeps
+// whatever the user had set up.
+function selectLoc(id){
+  if(id !== curLoc) resetListState();
+  curLoc=id; curPerson=null; query='';
+  syncSearchUi();
+  const l = LOCATIONS.find(x=>x.id===id);
+  if(l) map.flyTo([l.lat,l.lng], Math.max(map.getZoom(),9), {duration:.7});
+  refreshMarkers(); render();
+}
+function selectPerson(id){
+  const p=PEOPLE.find(x=>x.id===id);
+  if(p){
+    const loc = SITE_TO_LOC[p.site];
+    // opened from global search / another context — start that location clean
+    if(loc !== curLoc){ resetListState(); curLoc = loc; }
+  }
+  curPerson=id;
+  query=''; syncSearchUi(); refreshMarkers(); render();
+}
+function toggleRole(id){
+  activeRoles.has(id)?activeRoles.delete(id):activeRoles.add(id);
+  renderLoc(); animatePanel();
+}
+function resetRoles(){ activeRoles=new Set(ROLES.map(r=>r.id)); renderLoc(); animatePanel(); }
+function setSort(s){ sortBy=s; renderLoc(); animatePanel(); }
+function clearSearch(){ query=''; syncSearchUi(); render(); }
+function copyVal(btn,val){
+  const done=()=>{ btn.classList.add('done'); btn.innerHTML=I.check; toast('Copied '+val);
+                   setTimeout(()=>{btn.classList.remove('done'); btn.innerHTML=I.copy;},1400); };
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(val).then(done).catch(fallback); }
+  else fallback();
+  function fallback(){
+    const ta=document.createElement('textarea'); ta.value=val; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('Copy not supported'); }
+    document.body.removeChild(ta);
+  }
+}
+function exportCsv(){
+  const g=findGroup(curLoc), rows=locPeople();
+  const head=['Emp No','Display Name','Position Thai','Productivity Position','Group Detail of Work','Job Alias','Site','Workplace'];
+  const q=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`;
+  const csv='﻿'+[head.map(q).join(',')].concat(
+    rows.map(p=>[p.empNo,p.name,p.positionThai,p.prodPosition,p.groupDetail,p.jobAlias,p.site,g.name].map(q).join(','))
+  ).join('\r\n');
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  const a=document.createElement('a');
+  a.href=url; a.download=`STECON_${g.id}_staff.csv`; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url),1500);
+  toast(`Exported ${rows.length} rows`);
+}
+window.goHome=goHome; window.selectLoc=selectLoc; window.selectPerson=selectPerson;
+window.toggleRole=toggleRole; window.resetRoles=resetRoles; window.setSort=setSort; window.clearSearch=clearSearch;
+window.copyVal=copyVal; window.exportCsv=exportCsv;
+
+/* ========================= SEARCH UI ========================= */
+const gs=document.getElementById('gsearch'), sbox=document.getElementById('searchbox');
+function syncSearchUi(){ gs.value=query; sbox.classList.toggle('has-val', !!query); }
+gs.addEventListener('input', e=>{ query=e.target.value; sbox.classList.toggle('has-val', !!query); render(); });
+document.getElementById('gclear').addEventListener('click', ()=>{ clearSearch(); gs.focus(); });
+document.addEventListener('keydown', e=>{
+  if(e.key==='/' && document.activeElement!==gs && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)){
+    e.preventDefault(); gs.focus(); gs.select();
+  } else if(e.key==='Escape'){
+    if(query){ clearSearch(); gs.blur(); }
+    else if(curPerson){ selectLoc(SITE_TO_LOC[PEOPLE.find(x=>x.id===curPerson).site]); }
+    else if(curLoc){ goHome(); }
+  }
+});
+
+/* ========================= BAR TOOLTIPS ========================= */
+const tip=document.getElementById('bartip');
+function bindTips(){
+  panel.querySelectorAll('[data-tip]').forEach(el=>{
+    el.addEventListener('mouseenter', ()=>{ tip.textContent=el.dataset.tip; tip.classList.add('show'); });
+    el.addEventListener('mousemove', ev=>{
+      tip.style.left=Math.min(ev.clientX+14, window.innerWidth-tip.offsetWidth-10)+'px';
+      tip.style.top=(ev.clientY-34)+'px';
+    });
+    el.addEventListener('mouseleave', ()=>tip.classList.remove('show'));
+  });
+}
+
+/* ========================= MAP CONTROLS ========================= */
+document.getElementById('btn-reset').addEventListener('click', ()=>{
+  map.flyTo(HOME_VIEW.center, HOME_VIEW.zoom, {duration:.7});
+});
+const btnEmpty=document.getElementById('btn-empty'), btnEmptyTxt=document.getElementById('btn-empty-txt');
+btnEmpty.addEventListener('click', ()=>{
+  showEmpty=!showEmpty;
+  btnEmpty.classList.toggle('on', !showEmpty);
+  btnEmptyTxt.textContent = showEmpty ? 'Hide empty' : 'Show empty';
+  refreshMarkers();
+});
+
+/* ========================= INIT ========================= */
+countUp(document.getElementById('hs-total'), PEOPLE.length, 1100);
+refreshMarkers();
+render();
+</script>
+</body>
+</html>
